@@ -3,6 +3,7 @@ from items.models import Item, ItemAddForm
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.core.urlresolvers import reverse
+from django.contrib.auth.decorators import login_required
 
 def index(request):
 	latest_item_list = Item.objects.all().order_by('-date_created')[:5]
@@ -12,6 +13,7 @@ def index(request):
 	})
 	return HttpResponse(t.render(rc))
 
+@login_required
 def add(request):
 	if request.method == 'POST':
 		form = ItemAddForm(request.POST)
