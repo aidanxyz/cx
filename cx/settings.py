@@ -163,3 +163,4 @@ LOGGING = {
 }
 
 LOGIN_URL = 'customauth/login/'
+LOGIN_REDIRECT_URL = '/items/'
