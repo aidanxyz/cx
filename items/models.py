@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from djangosphinx.models import SphinxSearch
+from django.forms import ModelForm
 
 # Create your models here.
 class Category(models.Model):
@@ -19,3 +20,7 @@ class Item(models.Model):
 
 	def __unicode__(self):
 		return self.name
+
+class ItemAddForm(ModelForm):
+	class Meta:
+		model = Item

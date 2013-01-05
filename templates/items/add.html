@@ -1,0 +1,5 @@
+<form method="post" action='{% url "items.views.add" %}'>
+	{% csrf_token %}
+	{{ form.as_p }}
+	<input type="submit" value="add" />
+</form>
