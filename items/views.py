@@ -4,6 +4,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from customauth.models import CustomUser
 
 def index(request):
 	latest_item_list = Item.objects.all().order_by('-date_created')[:5]
@@ -20,8 +22,8 @@ def add(request):
 		if form.is_valid():
 			i = Item(
 				name=form.cleaned_data['name'],
-				date_created=form.cleaned_data['date_created'],
-				created_by=form.cleaned_data['created_by'],
+				date_created=timezone.now(),
+				created_by=CustomUser(id=request.user.id),
 				category=form.cleaned_data['category']
 			)
 			# i = Item(**form.cleaned_data)

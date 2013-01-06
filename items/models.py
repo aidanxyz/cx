@@ -24,3 +24,4 @@ class Item(models.Model):
 class ItemAddForm(ModelForm):
 	class Meta:
 		model = Item
+		fields = ('name', 'category')
