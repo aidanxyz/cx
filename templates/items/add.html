@@ -1,5 +1,19 @@
-<form method="post" action='{% url "items.views.add" %}'>
-	{% csrf_token %}
-	{{ form.as_p }}
-	<input type="submit" value="add" />
-</form>
+<head>
+	<script type="text/javascript" src="{{ STATIC_URL }}/javascript/jquery-1.8.3.min.js"></script>
+	<script type="text/javascript" src="{{ STATIC_URL }}/javascript/search.js"></script>
+	<script type="text/javascript" src="{{ STATIC_URL }}/javascript/ICanHaz.min.js"></script>
+	<!--ICanHaz template for similar item-->
+	<script id="similar_item" type="text/html">
+		<p id="similar_item">
+			<a href="http://auca-connect.local/index.php/item/view/{{id}}">{{name}}</a>
+		</p>
+	</script>
+</head>
+
+<body>
+	<form method="post" action='{% url "items.views.add" %}'>
+		{% csrf_token %}
+		{{ form.as_p }}
+		<input type="submit" value="add" />
+	</form>
+</body>
