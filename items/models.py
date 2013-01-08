@@ -14,15 +14,7 @@ class Item(models.Model):
 	date_created = models.DateTimeField('date created')
 	created_by = models.ForeignKey(settings.AUTH_USER_MODEL)
 	category = models.ForeignKey(Category)
-	# Sphinx search field
-	search = SphinxSearch(
-		index='items_item',
-		weights={
-			'name': 100,
-		},
-		mode='SPH_MATCH_ALL',
-	);
-
+	
 	def __unicode__(self):
 		return self.name
 
