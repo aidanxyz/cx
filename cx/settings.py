@@ -127,8 +127,6 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     # South migration tool
     'south',
-    # Sphinx search engine
-    'djangosphinx',
     # Custom apps
     'customauth',
     'items',
