@@ -130,6 +130,7 @@ INSTALLED_APPS = (
     # Custom apps
     'customauth',
     'items',
+    'reviews',
 )
 
 # A sample logging configuration. The only tangible logging

@@ -31,12 +31,6 @@ def add(request):
 				category=form.cleaned_data['category']
 			)
 			i.save()
-			# ...now save to Sphinx
-			db = MySQLdb.connect(host=settings.SPHINXQL_HOST, port=settings.SPHINXQL_PORT)
-			cursor = db.cursor()
-			rows_affected = cursor.execute("insert into items_item values({0}, '{1}', {2}, {3})".format(i.id, i.name, request.user.id, i.category_id)) 
-			assert rows_affected > 0
-
 			return HttpResponseRedirect(reverse('items.views.index'))
 	else:
 		form = ItemAddForm() # An unbound form
@@ -47,11 +41,11 @@ def add(request):
 
 def search(request):
 	if request.method == 'GET' and request.GET:
-		t = str(request.GET['text'])
-		if t != "":
+		q = str(request.GET['query'])
+		if q != "":
 			db = MySQLdb.connect(host=settings.SPHINXQL_HOST, port=settings.SPHINXQL_PORT)
 			cursor = db.cursor()
-			cursor.execute("select * from items_item where match('%s')" % t) # is it safe?
+			cursor.execute("select * from items_item where match('%s')" % q) # is it safe?
 			ids = tuple(row[0] for row in cursor.fetchall()) # is it efficient?
 			items = Item.objects.filter(id__in=ids)
 			return HttpResponse(serializers.serialize('json', items))
@@ -59,3 +53,14 @@ def search(request):
 			return HttpResponse(serializers.serialize('json', ""))
 	else:
 		raise Http404
+
+def view(request, item_id):
+	try:
+		item = Item.objects.get(pk=item_id)
+	except Item.DoesNotExist:
+		raise Http404
+	feedbacks = item.feedback_set.filter(is_active=True)
+	return render(request, 'items/view.html', {
+		'item': item,
+		'feedbacks': feedbacks,
+	})

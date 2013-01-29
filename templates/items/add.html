@@ -1,9 +1,5 @@
-<head>
-	<script type="text/javascript" src="{{ STATIC_URL }}/javascript/jquery-1.8.3.min.js"></script>
-	<script type="text/javascript" src="{{ STATIC_URL }}/javascript/search.js"></script>
-</head>
-
-<body>
+{% extends "base.html" %}
+{% block content %}
 	<div id="similar_items" style="display:none;">
 		<p>Similar items:</p>
 	</div>
@@ -12,4 +8,16 @@
 		{{ form.as_p }}
 		<input type="submit" value="add" />
 	</form>
-</body>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			siteNameSpace.apply("item_add");
+		})
+	</script>
+	<script type="text/html" id="similar_item">
+		<p id="similar_item">
+			{% verbatim %}
+			<a href="/items/{{ id }}">{{ name }}</a>
+			{% endverbatim %}
+		</p>
+	</script>
+{% endblock %}
