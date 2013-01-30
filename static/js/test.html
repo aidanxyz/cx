@@ -1,0 +1,27 @@
+<html>
+	<head>
+		<script type="text/javascript" src="ICanHaz.min.js"></script>
+		<script type="text/javascript" src="jquery-1.8.3.min.js"></script>
+		<script type="text/html" id="tmp">
+			<p><a> {{ content1 }} </a></p>
+			<p><a> {{ content2 }} </a></p>
+		</script>
+	</head>
+	<body>
+		<script type="text/javascript">
+			$(document).ready(function(){
+				var data = {
+					content1: "some damn content",
+					content2: "some other dummy content"
+				}
+				var domobj = ich.tmp(data);
+				$('.inner').append(domobj);
+			});
+		</script>
+
+		<div class="container">
+			<div class="inner">Hello</div>
+			<div class="inner">Goodbye</div>
+		</div>
+	<body>
+</html>
