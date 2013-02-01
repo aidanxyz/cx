@@ -74,6 +74,7 @@ class Vote(models.Model):
 	feedback = models.ForeignKey(Feedback)
 	voted_by = models.ForeignKey(settings.AUTH_USER_MODEL)
 	type = models.ForeignKey(VoteType)
+	date_voted = models.DateTimeField('date voted')
 
 	def __unicode__(self):
 		return self.type.name
