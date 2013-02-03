@@ -20,7 +20,7 @@ class Feedback(models.Model):
 
 	class Meta:
 		unique_together = ('body', 'item', 'is_positive')
-		ordering = ('score',)
+		ordering = ('-score', 'date_created')
 
 	def __unicode__(self):
 		return self.body
@@ -28,16 +28,6 @@ class Feedback(models.Model):
 # connect signals to receiver/handlers
 post_save.connect(feedback_sphinx_save, sender=Feedback)
 pre_delete.connect(feedback_sphinx_delete, sender=Feedback)
-
-class PositiveFeedbackAddForm(ModelForm):
-	class Meta:
-		model = Feedback
-		fields = ('body',)
-
-class NegativeFeedbackAddForm(ModelForm):
-	class Meta:
-		model = Feedback
-		fields = ('body',)
 
 class ModerationReason(models.Model):
 	reason = models.CharField(max_length=200, unique=True)
