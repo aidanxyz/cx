@@ -59,7 +59,12 @@ def view(request, item_id):
 		item = Item.objects.get(pk=item_id)
 	except Item.DoesNotExist:
 		raise Http404
-	feedbacks = item.feedback_set.filter(is_active=True)
+	feedbacks = item.feedback_set.filter(is_active=True).extra(
+		select={
+			'num_agrees': 'select count(*) from reviews_vote where reviews_vote.type_id=1 and reviews_feedback.id = reviews_vote.feedback_id',
+			'num_disagrees': 'select count(*) from reviews_vote where reviews_vote.type_id=2 and reviews_feedback.id = reviews_vote.feedback_id'
+		}
+	)
 	return render(request, 'items/view.html', {
 		'item': item,
 		'feedbacks': feedbacks,
