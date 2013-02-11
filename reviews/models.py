@@ -2,8 +2,12 @@ from django.db import models
 from django.conf import settings
 from items.models import Item
 from django.forms import ModelForm
-from django.db.models.signals import post_save, pre_delete
-from reviews.receivers import feedback_sphinx_save, feedback_sphinx_delete
+from django.db.models.signals import post_save, pre_delete, post_delete
+from reviews.vote_type_utils import get_vt_weight
+from django.dispatch import receiver
+from django.db.models import F
+from reviews.sphinxql import sphinxql_query
+from reviews.custom_exceptions import WrongVoterException
 
 # Create your models here.
 # pragmatique
@@ -25,9 +29,17 @@ class Feedback(models.Model):
 	def __unicode__(self):
 		return self.body
 
-# connect signals to receiver/handlers
-post_save.connect(feedback_sphinx_save, sender=Feedback)
-pre_delete.connect(feedback_sphinx_delete, sender=Feedback)
+@receiver(post_save, sender=Feedback)
+def feedback_sphinx_save(sender, instance, created, **kwargs):
+	if created:
+		q = "insert into reviews_feedback values({0}, '{1}', {2}, {3})".format(instance.id, instance.body, instance.created_by_id, int(instance.is_positive))
+		rows_affected = sphinxql_query(q)
+		assert rows_affected > 0
+
+@receiver(pre_delete, sender=Feedback)
+def feedback_sphinx_delete(sender, instance, **kwargs):
+	q = "delete from reviews_feedback where id={0}".format(instance.id)
+	sphinxql_query(q)
 
 class ModerationReason(models.Model):
 	reason = models.CharField(max_length=200, unique=True)
@@ -69,5 +81,28 @@ class Vote(models.Model):
 	def __unicode__(self):
 		return self.type.name
 
+	def save(self, *args, **kwargs):
+		if Feedback.objects.get(pk=self.feedback_id).created_by_id == self.voted_by_id:
+			raise WrongVoterException;
+		super(Vote, self).save(*args, **kwargs)
+
 	class Meta:
 		unique_together = ('feedback', 'voted_by')
+
+@receiver(post_save, sender=Vote)
+def vote_save_score(sender, instance, created, **kwargs):
+	if created:
+		Feedback.objects.filter(id=instance.feedback_id).update(score=F('score') + get_vt_weight(int(instance.type_id)))
+
+@receiver(post_delete, sender=Vote)
+def vote_delete_score(sender, instance, **kwargs):
+	Feedback.objects.filter(id=instance.feedback_id).update(score=F('score') - get_vt_weight(int(instance.type_id)))
+
+class Detail(models.Model):
+	body = models.TextField()
+	feedback = models.ForeignKey(Feedback)
+	written_by = models.ForeignKey(settings.AUTH_USER_MODEL)
+	date_written = models.DateTimeField('date created')
+	
+	def __unicode__(self):
+		return self.body[:20] + "..."
