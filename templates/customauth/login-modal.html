@@ -1,0 +1,25 @@
+<!-- Modal -->
+<div id="login-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="login-modal-label" aria-hidden="true">
+	<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+		<h3 id="login-modal-label">Login form</h3>
+	</div>
+	<div class="modal-body">
+		<form method="post" action="/customauth/login/">
+			{% csrf_token %}
+			<p>
+				<label for="id_username">Email_address:</label> 
+				<input id="id_username" type="text" name="username" maxlength="254">
+			</p>
+			<p>
+				<label for="id_password">Password:</label> 
+				<input type="password" name="password" id="id_password">
+			</p>
+			<input type="hidden" name="next" value="{{ request.path }}">
+			<input type="submit" value="login">
+		</form>
+	</div>
+	<div class="modal-footer">
+		<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+	</div>
+</div>

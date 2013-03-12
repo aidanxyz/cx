@@ -1,0 +1,7 @@
+<!-- Feedback adding form -->
+<form id="add_feedback" action="/items/{{ item.id }}/feedbacks/add/" method="post" {% if hidden %} style="display:none;" {% endif %}>
+	{% csrf_token %}
+	<input type="text" name="feedback_body" />
+	<input type="hidden" name="is_positive" value="{{ is_positive }}">
+	<input type="submit" value="add">
+</form>

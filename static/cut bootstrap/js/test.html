@@ -1,0 +1,53 @@
+<html>
+	<head>
+		<script type="text/javascript" src="ICanHaz.min.js"></script>
+		<script type="text/javascript" src="jquery-1.8.3.min.js"></script>
+		<script type="text/html" id="tmp">
+			<p><a> {{ content1 }} </a></p>
+			<p><a> {{ content2 }} </a></p>
+		</script>
+	</head>
+	<body>
+		<script type="text/javascript">
+			$(document).ready(function(){
+				var data = {
+					content1: "some damn content",
+					content2: "some other dummy content"
+				}
+				var domobj = ich.tmp(data);
+				//$('.inner').append(domobj);
+				//alert($('div[vote-id=5]').text());
+				$(".waka").click(function() {
+					console.log($(this).parent());
+					console.log($(this).parents());
+				});
+				console.log($(".inner4").data('div').a);
+				$(".inner4").data('div').a = 900;
+				console.log($(".inner4").data('div').a);
+			});
+		</script>
+
+		<div class="container">
+			<div class="inner4" data-div='{"a": 5, "b": 6}'>Hello</div>
+			<div class="inner" vote-id="5">Goodbye</div>
+			<ul>
+				<li the-super-duper-attribute="1234">
+					<span>the span</span>
+					<p>
+						<a class="maka">the maka link</a>
+						<a class="waka">the waka link</a>
+					</p>
+				</li>
+				<li the-super-duper-attribute="12345">
+					<span>the span</span>
+					<p>
+						<a class="maka4">the maka link 2</a>
+						<a class="waka">the waka link 2</a>
+						<a class="daka">the daka link 2</a>
+						<a href="http://e-course.auca.kg/pluginfile.php/43138/mod_resource/content/3/Lecture%204%20Video.mov"> the lecture </a>
+					</p>
+				</li>
+			</ul>
+		</div>
+	<body>
+</html>

@@ -1,0 +1,21 @@
+<!-- Feedback body -->
+<li class="well" feedback-id='{{ feedback.id }}'>
+	<span id="score">{{ feedback.score }}</span>
+	{{ feedback.body }}
+	<p id="actions">
+		{% if feedback.vote_type_id == 1%}
+			<a class="unvote" type-id="1" weight="1" href="javascript:void(0);">Agree(<span id='count'>{{ feedback.num_agrees }}</span>) </a>
+		{% else %}
+			<a class="vote" type-id="1" weight="1" href="javascript:void(0);">Agree(<span id='count'>{{ feedback.num_agrees }}</span>) </a>
+		{% endif %}
+
+		{% if feedback.vote_type_id == 2 %}
+			<a class="unvote" type-id="2" weight="-1" href="javascript:void(0);">Disagree(<span id='count'>{{ feedback.num_disagrees }}</span>)</a>
+		{% else %}
+			<a class="vote" type-id="2" weight="-1" href="javascript:void(0);">Disagree(<span id='count'>{{ feedback.num_disagrees }}</span>)</a>
+		{% endif %}
+	</p>
+	<p id="info">
+		<a href="/feedbacks/{{ feedback.id }}/details">Details(<span id="count">{{ feedback.num_details }}</span>)</a>
+	</p>
+</li>

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+	<h2><a href="/items/{{ feedback.item_id }}/">{{ feedback.item.name }}</a></h2>
+	<h1 feedback-id="{{ feedback.id }}">{{ feedback.body }}</h1>
+	<form action="/feedbacks/{{ feedback.id }}/details/add" method="post" id="detail">
+		<input type="text" name="body">
+		<input type="submit" value="Add">
+	</form>
+	<div id="details">
+		{% for detail in details %}
+			<div id="detail" detail-id="{{ detail.id }}" class="well">
+				<p>{{ detail.written_by.full_name }}</p>
+				<p>{{ detail.body }}</p>
+				<p>{{ detail.date_written }}</p>
+			</div>
+		{% endfor %}
+	</div>
+	<div id="paginator">
+		<p>
+			{% if details.has_previous %}
+				<a href="?page={{ details.previous_page_number }}">previous</a>
+			{% endif %}
+
+			page {{ details.number }} of {{ details.paginator.num_pages }}.
+
+			{% if details.has_next %}
+				<a href="?page={{ details.next_page_number }}">next</a>
+			{% endif %}
+		</p>
+		{% for page_num in details.paginator.page_range|slice:":2" %}
+			<a href="?page={{ page_num }}">{{ page_num }} </a>
+		{% endfor %}
+		...
+		{% for page_num in details.paginator.page_range|slice:"-2:" %}
+			<a href="?page={{ page_num }}">{{ page_num }} </a>
+		{% endfor %}
+	</div>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			siteNameSpace.apply("detail_add");
+		})
+	</script>
+	<script type="text/html" id="detail">
+		{% verbatim %}
+		<div id="detail" class="well" detail-id="{{ id }}">
+			<p>{{ written_by }}</p>
+			<p>{{ body }}</p>
+			<p>{{ date_written }}</p>
+		</div>
+		{% endverbatim %}
+	</script>
+{% endblock %}
