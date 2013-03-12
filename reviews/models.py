@@ -7,7 +7,8 @@ from reviews.vote_type_utils import get_vt_weight
 from django.dispatch import receiver
 from django.db.models import F
 from reviews.sphinxql import sphinxql_query
-from reviews.custom_exceptions import WrongVoterException
+from reviews.custom_exceptions import SelfVotingException, UserDidNotUseItem
+from customauth.models import CustomUser
 
 # Create your models here.
 # pragmatique
@@ -25,6 +26,13 @@ class Feedback(models.Model):
 	class Meta:
 		unique_together = ('body', 'item', 'is_positive')
 		ordering = ('-score', 'date_created')
+
+	def save(self, request=None, *args, **kwargs):
+		if request:	# if this is view call
+			user = request.user
+			if not user.items_used.filter(id=self.item_id):
+				raise UserDidNotUseItem
+		super(Feedback, self).save(*args, **kwargs)
 
 	def __unicode__(self):
 		return self.body
@@ -81,9 +89,16 @@ class Vote(models.Model):
 	def __unicode__(self):
 		return self.type.name
 
-	def save(self, *args, **kwargs):
-		if Feedback.objects.get(pk=self.feedback_id).created_by_id == self.voted_by_id:
-			raise WrongVoterException;
+	def save(self, request=None, *args, **kwargs):
+		feedback = Feedback.objects.get(pk=self.feedback_id)
+		# if Jerry is trying to vote for his own feedback
+		if feedback.created_by_id == self.voted_by_id:
+			raise SelfVotingException
+
+		if request:	# if this is view call
+			user = request.user
+			if not user.items_used.filter(id=feedback.item_id):
+				raise UserDidNotUseItem
 		super(Vote, self).save(*args, **kwargs)
 
 	class Meta:
@@ -103,6 +118,22 @@ class Detail(models.Model):
 	feedback = models.ForeignKey(Feedback)
 	written_by = models.ForeignKey(settings.AUTH_USER_MODEL)
 	date_written = models.DateTimeField('date created')
+
+	class Meta:
+		ordering = ('-date_written',)
+
+	def save(self, *args, **kwargs):
+		feedback = Feedback.objects.get(pk=self.feedback_id)
+		user = kwargs['request'].user
+
+		if not user.items_used.filter(id=feedback.item_id):
+			raise UserDidNotUseItem
+		super(Detail, self).save(*args, **kwargs)
 	
 	def __unicode__(self):
 		return self.body[:20] + "..."
+
+class DetailAddForm(ModelForm):
+	class Meta:
+		model = Detail
+		fields = ('body', )

@@ -1,14 +1,17 @@
 from django.template import RequestContext, loader
 from items.models import Item, ItemAddForm
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpResponse, HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.shortcuts import render
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
+from customauth.decorators import login_required_ajax
+from django.views.decorators.http import require_POST
 from django.utils import timezone
 from customauth.models import CustomUser
 from django.core import serializers
 from django.conf import settings
 import MySQLdb
+import json
 
 def index(request):
 	latest_item_list = Item.objects.all().order_by('-date_created')[:5]
@@ -48,9 +51,12 @@ def search(request):
 			cursor.execute("select * from items_item where match('%s')" % q) # is it safe?
 			ids = tuple(row[0] for row in cursor.fetchall()) # is it efficient?
 			items = Item.objects.filter(id__in=ids)
-			return HttpResponse(serializers.serialize('json', items))
+			result = []
+			for item in items:
+				result.append({'id': item.id, 'name': item.name})
+			return HttpResponse(json.dumps(result))
 		else:
-			return HttpResponse(serializers.serialize('json', ""))
+			return HttpResponse(json.dumps(""))
 	else:
 		raise Http404
 
@@ -59,13 +65,31 @@ def view(request, item_id):
 		item = Item.objects.get(pk=item_id)
 	except Item.DoesNotExist:
 		raise Http404
-	feedbacks = item.feedback_set.filter(is_active=True).extra(
-		select={
-			'num_agrees': 'select count(*) from reviews_vote where reviews_vote.type_id=1 and reviews_feedback.id = reviews_vote.feedback_id',
-			'num_disagrees': 'select count(*) from reviews_vote where reviews_vote.type_id=2 and reviews_feedback.id = reviews_vote.feedback_id'
-		}
-	)
+
+	item_used_by_user = False
+	add_select = {
+		'num_agrees': 'select count(*) from reviews_vote where reviews_vote.type_id=1 and reviews_vote.feedback_id = reviews_feedback.id',
+		'num_disagrees': 'select count(*) from reviews_vote where reviews_vote.type_id=2 and reviews_vote.feedback_id = reviews_feedback.id',
+		'num_details': 'select count(*) from reviews_detail where reviews_feedback.id = reviews_detail.feedback_id'
+	}
+	if request.user.is_authenticated():
+		add_select['vote_type_id'] = 'select type_id from reviews_vote where reviews_vote.feedback_id=reviews_feedback.id and reviews_vote.voted_by_id=%s' % (request.user.id)
+		if request.user.items_used.filter(id=item_id):
+			item_used_by_user = True
+
+	feedbacks = item.feedback_set.filter(is_active=True).extra(select=add_select)
 	return render(request, 'items/view.html', {
 		'item': item,
 		'feedbacks': feedbacks,
+		'item_used_by_user': item_used_by_user,
 	})
+
+@login_required_ajax
+@require_POST
+def add_item_to_users_items_list(request, item_id):
+	try:
+		item = Item.objects.get(pk=item_id)
+	except Item.DoesNotExist:
+		raise Http404
+	request.user.items_used.add(item)
+	return HttpResponse(json.dumps({'success': True, 'message': 'added'}))

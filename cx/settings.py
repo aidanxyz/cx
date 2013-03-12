@@ -168,3 +168,5 @@ LOGIN_REDIRECT_URL = '/items/'
 # Sphinx MySQL protocol settings
 SPHINXQL_HOST = '127.0.0.1'
 SPHINXQL_PORT = 3307
+
+DETAILS_PER_PAGE = 1

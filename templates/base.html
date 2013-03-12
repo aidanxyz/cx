@@ -21,6 +21,7 @@
 					<a href="/customauth/logout">logout {{ user.full_name }}</a>
 				{% else %}
 					<a href="/customauth/login?next={{ request.path }}">login</a>
+					{% include "customauth/login-modal.html" %}
 				{% endif %}
 			</div>
 		</div>

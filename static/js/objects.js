@@ -1,5 +1,5 @@
 // module pattern
-var djangoAjaxCsrf = (function(){
+var DjangoAjaxCsrf = (function(){
     var config  = {
         cookie_name: 'csrftoken',
         cookie_val: null
@@ -44,178 +44,318 @@ var djangoAjaxCsrf = (function(){
     }
 })();
 
-// module pattern
-var fullTextSearch = (function() {
-	var config = {
-		formSelector: "#id_name",
-        url: '/items/search',
-        timeout: 1000
-	}
+function VoteHandler($this) {  //"$this" is a clicked link
+    var prev_vote = $this.siblings('.unvote');
+    var revote = prev_vote.length == 1;
+    
+    var feedback = $this.parents('li');
 
-	function handleResults(data, textStatus, jqXHR) {
-		if (data.length == 0) {
-            $('div#similar_items').hide();
+    function vote() {
+        var data_to_send = {'vote_type': $this.attr('type-id')}
+        if (revote) {
+            data_to_send.revote = true;
         }
-        else {
-            // clear the list
-            console.log(data);
-            $('p#similar_item').remove();
-            $.each(data, function(i, item_obj){
-                item = ich.similar_item({
-                    id: item_obj.pk, 
-                    name: item_obj.fields.name
-                });
-                console.log(item);
-                // append template to '#similar_items' div-box
-                $('div#similar_items').append(item);
-            });
-            // display 'similar_items' div-box
-            $('div#similar_items').show();
-        }
-	}
-
-	function init() {
-		var thread = null;
-        $(config.formSelector).keyup(function(){
-        	clearTimeout(thread);
-        	var form = $(this);
-            thread = setTimeout(function(){
-            	search(form.val());
-            }, config.timeout);
+        
+        var request = $.ajax({
+            data: data_to_send,
+            type: 'post',
+            url: '/feedbacks/' + feedback.attr('feedback-id') + '/vote/',
+            dataType: 'json'
         });
-	}
 
-	function search(query) {
-		$.ajax({
+        request.done(function(data, textStatus, jqXHR) {
+            affect_score(parseInt($this.attr('weight')));
+            affect_count(1);
+            // change class of clicked link
+            change_class_to('unvote');
+        });
+
+        request.fail(function(jqXHR, textStatus, errorThrown) {
+            alert(jqXHR.responseText);
+        });
+    }
+
+    function unvote() {
+        var request = $.ajax({
+            data: {'vote_type': $this.attr('type-id')},
+            type: 'post',
+            url: '/feedbacks/' + feedback.attr('feedback-id') + '/unvote/',
+            dataType: 'json'
+        });
+        
+        request.done(function(data, textStatus, jqXHR) {
+            affect_score(-parseInt($this.attr('weight')));
+            affect_count(-1);
+            change_class_to('vote');
+        });
+
+        request.fail(function(jqXHR, textStatus, errorThrown) {
+            alert(jqXHR.responseText);
+        });
+    }
+
+    function affect_score(weight) {
+        var score = feedback.children('span#score');
+        score.text(parseInt(score.text()) + weight);
+        if (revote) {
+            score.text(parseInt(score.text()) - parseInt(prev_vote.attr('weight')));
+        }
+    }
+
+    function affect_count(weight) {
+        var count = $this.children('span#count');
+        count.text(parseInt(count.text()) + weight);
+        if (revote) {
+            var prev_count = prev_vote.children('span#count');
+            prev_count.text(parseInt(prev_count.text()) - weight);
+        }
+    }
+
+    function change_class_to(new_class) {
+        $this.attr('class', opposite(opposite(new_class)));
+        if (revote) {
+            prev_vote.attr('class', opposite(new_class));
+        }
+    }
+
+    function opposite(state) {
+        if (state == 'vote') 
+            return 'unvote';
+        else
+            return 'vote';
+    }
+
+    return {
+        vote: vote,
+        unvote: unvote
+    }
+}
+
+function SearchWhileTyping(config) {
+
+    var input_sel   = config.input_sel, 
+        url         = config.url, 
+        timeout     = config.timeout,
+        ich_id      = config.ich_id,    // id of ich template
+        results_sel = config.results_sel;   // element containing search results
+        wrapper_sel = config.wrapper_sel;   // parent of results element
+
+    function init() {
+        var thread = null;
+        $(input_sel).keyup(function(){
+            clearTimeout(thread);
+            var form = $(this);
+            thread = setTimeout(function(){
+                search(form.val());
+            }, timeout);
+        });
+    }
+
+    function search(query) {
+        var request = $.ajax({
             type: 'GET',
-            url: config.url,
+            url: url,
             data: {'query': query},
             dataType:'json',
-            success: handleResults
         });
-	}
 
-	return {
-		config: config, 
-		init: init,
-		handleResults: handleResults
-	}
-})();
+        request.done(function(data, textStatus, jqXHR) {
+            if (data.length == 0) {
+                $(wrapper_sel).hide();
+            }
+            else {
+                // clear the list
+                $(results_sel).html("");
+
+                $.each(data, function(i, obj){
+                    // html_item = ich.similar_item({id: 5, name: 'some name'});
+                    html_elem = ich[ich_id](obj);
+                    $(results_sel).append(html_elem);
+                });
+                $(wrapper_sel).show();
+            }
+        });
+
+        request.fail(function(jqXHR, textStatus, errorThrown) {
+            alert(jqXHR.responseText);
+        });
+    }
+
+    init();
+}
 
 // object literal pattern
 var siteNameSpace = {
     common : {
-        onload: function() {
-            djangoAjaxCsrf.init();
-        }
+        config: {},
+        init: function() {
+            DjangoAjaxCsrf.init();
+        },
+        utils: {
+            ajax_error_handler: function(jqXHR) {
+                if (jqXHR.status == 401) {
+                    alert("you need to login");
+                }
+                else {
+                    alert($.parseJSON(jqXHR.responseText).message);
+                }
+            }
+        },
     },
     mainpage: {
-        onload: function(){
+        init: function(){
             return;
         }
     },
     review: {
-        onload: function() {
-            // adding feedback
-            $('form#feedback').submit(function(){
-                var form = $(this);
-                if (form.children('[name="feedback_body"]').val() == '') {
-                    return false;
-                }
-                $.ajax({
-                    data: $(this).serialize(),
-                    type: $(this).attr('method'),
-                    url:  $(this).attr('action'),
-                    dataType: 'json'
-                }).done(function(data, textStatus, jqXHR) {
-                    var feedback = ich.feedback(data);
-                    form.siblings('ul').append(feedback);
-                    // epmty the box
-                    form.children('[name="feedback_body"]').val("");
-                    // fire update function
-                }).fail(function(jqXHR, textStatus, errorThrown) {
-                    console.log(jqXHR);
-                    var error = "";
-                    $.each($.parseJSON(jqXHR.responseText), function(key, value) {
-                        error += value + " ";
-                    });
-                    alert(error);
-                })
-                return false;
+        config: {
+            is_authenticated: false,
+        },
+        init: function(config) {
+            if (config && typeof config === 'object') {
+                $.extend(this.config, config);
+            }
+            if (this.config.is_authenticated) { // this = review object
+                this.authenticated[this.config.is_used ? 'used' : 'not_used']();
+            }
+            else {
+                this.guest();
+            }
+        },
+        guest: function() {
+            $('.vote, .unvote, a#add_feedback, a#used').click(function() {
+                $('#login-modal').modal();
             });
-            // voting
-            $('.vote').live('click', function(){
-                var link = $(this);
-                var data_to_send = {'vote_type': link.attr('type-id')}
-                var prev_link = link.siblings('.unvote');
-                if (prev_link.length == 1) {
-                    data_to_send.revote = true;
-                }
-                $.ajax({
-                    data: data_to_send,
-                    type: 'post',
-                    url: '/feedbacks/' + link.parents('li').attr('feedback-id') + '/vote/',
-                    dataType: 'json'
-                }).done(function(data, textStatus, jqXHR) {
-                    // change link attributes - '.unvote'
-                    link.attr('class', 'unvote');
-                    // feedback score
-                    var score = link.parent().prev('span');
-                    // count of votes of clicked link
-                    var count = link.children('span#count');
-                    // increment vote counter
-                    count.text(parseInt(count.text()) + 1);
-                    // add weight to feedback score
-                    score.text(parseInt(score.text()) + parseInt(link.attr('weight')));
-                    // if there already was previous vote on this feedback
-                    if (prev_link.length == 1) {
-                        // rollback state
-                        var prev_count = prev_link.children('span#count');
-                        prev_count.text(parseInt(prev_count.text()) - 1);
-                        score.text(parseInt(score.text()) - parseInt(prev_link.attr('weight')));
-                        prev_link.attr('class', 'vote')
+        },
+        authenticated: {
+            used: function() {
+                // adding feedback
+                $('form#add_feedback').submit(function(){
+                    var form = $(this);
+                    if (form.children('[name="feedback_body"]').val() == '') {
+                        return false;
                     }
-                    // fire update function
-                }).fail(function(jqXHR, textStatus, errorThrown) {
-                    alert(jqXHR.responseText)
+
+                    var request = $.ajax({
+                        data: $(this).serialize(),
+                        type: $(this).attr('method'),
+                        url:  $(this).attr('action'),
+                        dataType: 'json'
+                    });
+
+                    request.done(function(data, textStatus, jqXHR) {
+                        var feedback = ich.feedback(data);
+                        form.siblings('ul').append(feedback);
+                        form.children('[name="feedback_body"]').val("");
+                        // fire update function
+                    });
+
+                    request.fail(function(jqXHR, textStatus, errorThrown) {
+                        console.log(jqXHR);
+                        var error = "";
+                        $.each($.parseJSON(jqXHR.responseText), function(key, value) {
+                            error += value + " ";
+                        });
+                        alert(error);
+                    });
+                    return false;
                 });
-            });
-            // unvoting
-            $('.unvote').live('click', function() {
-                var link = $(this);
-                $.ajax({
-                    data: {'vote_type': link.attr('type-id')},
-                    type: 'post',
-                    url: '/feedbacks/' + link.parents('li').attr('feedback-id') + '/unvote/',
-                    dataType: 'json'
-                }).done(function(data, textStatus, jqXHR) {
-                    // change link attributes - '.vote'
-                    link.attr('class', 'vote');
-                    // subtract from score
-                    var score = link.parent().prev('span');
-                    score.text(parseInt(score.text()) - parseInt(link.attr("weight")));
-                    // decrement votes number
-                    var count = link.children('span#count');
-                    count.text(parseInt(count.text()) - 1);
-                    // fire update function
-                }).fail(function(jqXHR, textStatus, errorThrown) {
-                    alert(jqXHR.responseText);
+                // voting
+                $(document).on('click', '.vote', function(){
+                    console.log('click on .vote');
+                    VoteHandler($(this)).vote();
                 });
+                // unvoting
+                $(document).on('click', '.unvote', function(){
+                    console.log('click on .unvote');
+                    VoteHandler($(this)).unvote();
+                });
+            },
+            not_used: function() {
+                // <I used it> click
+                $('button#used').click(function() {
+                    $('a#used').trigger('click');
+                    $(this).text('Saving...');
+                    setTimeout(function() {
+                        $('#not_used-modal').modal('hide');
+                    }, 1000);
+                });
+
+                $('a#used').click(function() {
+                    var link = $(this);
+                    var request = $.ajax({
+                        type: 'post',
+                        url: '/items/' + link.attr('item-id') + '/used/',
+                        dataType: 'json'
+                    });
+
+                    request.done(function(data, textStatus, jqXHR) {
+                        link.parent('small').text("I used it");
+                        // switch event handlers to allow voting etc.
+                        $('.vote, .unvote, a#add_feedback').off('click');
+                        siteNameSpace.review.authenticated.used();
+                        // remove "Add feedback" links and show forms
+                        $('a#add_feedback').remove();
+                        $('form#add_feedback').show();
+                    });
+
+                    request.fail(function(jqXHR, textStatus, errorThrown) {
+                        siteNameSpace.common.utils.ajax_error_handler(jqXHR);
+                    });
+                });
+                // voting, unvoting, adding a feedback on unused state
+                $('.vote, .unvote, a#add_feedback').click(function() {
+                    $('#not_used-modal').modal();
+                });
+            }
+        },
+    },
+    item_add: {
+        init: function() {
+            SearchWhileTyping({
+                url: '/items/search',
+                input_sel: '#id_name',
+                timeout: 1000,
+                ich_id: 'similar_item',
+                results_sel: 'ul#results_list',
+                wrapper_sel: 'div#similar_items'
             });
         }
     },
-    item_add: {
-        onload: function() {
-            fullTextSearch.init();
+    detail_add: {
+        init: function() {
+            // adding detail
+            $('form#detail').submit(function() {
+                var form = $(this);
+                var feedback_id = form.siblings('h1').attr('feedback-id');
+                
+                var request = $.ajax({
+                    url: '/feedbacks/' + feedback_id + '/details/add/',
+                    data: form.serialize(),
+                    type: 'post',
+                    dataType: 'json'
+                });
+
+                request.done(function(data, textStatus, jqXHR) {
+                    var detail = ich.detail(data);
+                    form.next('div#details').prepend(detail);
+                    form.children('[name="body"]').val("");
+                });
+
+                request.fail(function(jqXHR, textStatus, errorThrown) {
+                    alert(jqXHR.responseText);
+                });
+                return false;
+            });
         }
     },
     login: {
-        onload: function() {
+        init: function() {
             return;
         }
     },
-    apply: function(page) {
-        this.common.onload();
-        this[page].onload();
+    exec: function(page, config) {
+        this.common.init();
+        this[page]['init'](config);
     }
 }

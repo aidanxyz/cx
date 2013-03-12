@@ -1,65 +1,77 @@
 {% extends "base.html" %}
 {% block content %}
 	<div class="row">
-		<h1>{{ item.name }}</h2>
+		<h1>{{ item.name }} 
+			<small>
+			{% if item_used_by_user %}
+				I used it
+			{% else %}
+				<a href="javascript:void(0);" id="used" item-id="{{ item.id }}">I used this</a>
+				{% include "items/not_used-modal.html" %}
+			{% endif %}
+			</small>
+		</h1>
 	</div>
 	<div class="row">
-
 		<div class="span4" id="pros">
 			<h3>What I like:</h3>
-			{% for feedback in feedbacks %}
-				{% if feedback.is_positive %}
-					<div class="well">
-						{{ feedback.body }}
-						<p id="actions">
-							<a class="vote" id="1" href="#">Agree</a>/<a class="vote" id="2" href="#">Disagree</a>
-						</p>
-					</div>
-				{% endif %}
-			{% endfor %}
-			{% if user.is_authenticated %}
-				<form id="feedback" action="/reviews/feedback/add/" method="post">
-					{% csrf_token %}
-					<input type="text" name="feedback_body" />
-					<input type="hidden" name="item_id" value={{ item.id }}>
-					<input type="hidden" name="is_positive" value=1>
-					<input type="submit" value="add">
-				</form>
+			<ul>
+				{% for feedback in feedbacks %}
+					{% if feedback.is_positive %}
+						{% include "reviews/feedbacks/feedback-li.html" %}
+					{% endif %}
+				{% endfor %}
+			</ul>
+			{% if user.is_authenticated and item_used_by_user %}
+				{% include "reviews/feedbacks/add.html" with is_positive=1 %}
+			{% else %}
+				<a href="javascript:void(0);" id="add_feedback">Add feedback</a>
+				{% include "reviews/feedbacks/add.html" with is_positive=1 hidden=True%}
 			{% endif %}
 		</div>
 		<div class="span4" id="cons">
 			<h3>What I don't like:</h3>
-			{% for feedback in feedbacks %}
-				{% if not feedback.is_positive %}
-					<div class="well">
-						{{ feedback.body }}
-						<p id="actions">
-							<a class="vote" id="up" href="#">Agree</a>/<a class="vote" id="down" href="#">Disagree</a>
-						</p>
-					</div>
-				{% endif %}
-			{% endfor %}
-			{% if user.is_authenticated %}
-				<form id="feedback" action="/reviews/feedback/add/" method="post">
-					{% csrf_token %}
-					<input type="text" name="feedback_body" />
-					<input type="hidden" name="item_id" value={{ item.id }}>
-					<input type="hidden" name="is_positive" value=0>
-					<input type="submit" value="add">
-				</form>
+			<ul>
+				{% for feedback in feedbacks %}
+					{% if not feedback.is_positive %}
+						{% include "reviews/feedbacks/feedback-li.html" %}
+					{% endif %}
+				{% endfor %}
+			</ul>
+			{% if user.is_authenticated and item_used_by_user %}
+				{% include "reviews/feedbacks/add.html" with is_positive=0 %}
+			{% else %}
+				<a href="javascript:void(0);" id="add_feedback">Add feedback</a>
+				{% include "reviews/feedbacks/add.html" with is_positive=0 hidden=True%}
 			{% endif %}
 		</div>
 	</div>
 	<script type="text/html" id="feedback">
-		<div class="well">
+		<li class="well" feedback-id='{% verbatim %}{{ id }}{% endverbatim %}'>
+			<span id="score">0</span>
 			{% verbatim %}
 			{{ body }}
 			{% endverbatim %}
-		</div>
+			<p id="actions">
+				<a class="vote" type-id="1" weight="1" href="javascript:void(0);">Agree(<span id='count'>0</span>) </a>
+				<a class="vote" type-id="2" weight="-1" href="javascript:void(0);">Disagree(<span id='count'>0</span>)</a>
+			</p>
+			<p id="info">
+				<a href="javascript:void(0);">Details(<span id="count">0</span>)</a>
+			</p>
+		</li>
 	</script>
 	<script type="text/javascript">
 		$(document).ready(function() {
-			siteNameSpace.apply("review");
+			{% if user.is_authenticated %}
+				{% if item_used_by_user %}
+					siteNameSpace.exec('review', { is_authenticated: true, is_used: true });
+				{% else %}
+					siteNameSpace.exec('review', { is_authenticated: true, is_used: false });
+				{% endif %}
+			{% else %}
+				siteNameSpace.exec('review');	// default configuration is set to {is_authenticated: false}, so guest() will fire
+			{% endif %}
 		});
 	</script>
 {% endblock %}

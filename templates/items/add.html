@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 	<div id="similar_items" style="display:none;">
-		<p>Similar items:</p>
+		<h5>Make sure you don't repeat these:</h5>
+		<ul id="results_list">
+		</ul>
 	</div>
 	<form method="post" action='{% url "items.views.add" %}'>
 		{% csrf_token %}
@@ -10,14 +12,14 @@
 	</form>
 	<script type="text/javascript">
 		$(document).ready(function() {
-			siteNameSpace.apply("item_add");
+			siteNameSpace.exec("item_add");
 		})
 	</script>
 	<script type="text/html" id="similar_item">
-		<p id="similar_item">
+		<li id="similar_item">
 			{% verbatim %}
 			<a href="/items/{{ id }}">{{ name }}</a>
 			{% endverbatim %}
-		</p>
+		</li>
 	</script>
 {% endblock %}
