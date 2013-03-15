@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
-from items.models import Item
+from items.models import Item, UsageExperience
 
 class CustomUserManager(BaseUserManager):
 	def create_user(self, email, full_name, password=None):
@@ -45,7 +45,7 @@ class CustomUser(AbstractBaseUser):
 	USERNAME_FIELD = 'email'
 	REQUIRED_FIELDS = ['full_name']
 
-	items_used = models.ManyToManyField(Item)
+	items_used = models.ManyToManyField(Item, through="UsageExperience")
 
 	def get_full_name(self):
 		# The user is identified by their email address

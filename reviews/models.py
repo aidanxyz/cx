@@ -7,7 +7,7 @@ from reviews.vote_type_utils import get_vt_weight
 from django.dispatch import receiver
 from django.db.models import F
 from reviews.sphinxql import sphinxql_query
-from reviews.custom_exceptions import SelfVotingException, UserDidNotUseItem
+from reviews.custom_exceptions import SelfVotingException, UserDidNotUseItem, PriorityOutOfRange
 from customauth.models import CustomUser
 
 # Create your models here.
@@ -137,3 +137,30 @@ class DetailAddForm(ModelForm):
 	class Meta:
 		model = Detail
 		fields = ('body', )
+
+
+class Priority(models.Model):
+	WEIGHTS = {1: 0.5, 2: 0.4, 3: 0.3, 4: 0.2, 5: 0.1}
+	item = models.ForeignKey(Item) # for unique indexing
+	feedback = models.ForeignKey(Feedback)
+	value = models.PositiveSmallIntegerField() # priority number: 1 - 5
+	marked_by = models.ForeignKey(CustomUser)
+	date_marked = models.DateTimeField()
+
+	def save(self, request=None, *args, **kwargs):
+		if self.value < 1 or self.value > 5:
+			raise PriorityOutOfRange
+		self.item = Item(id=Feedback.objects.get(pk=self.feedback_id).item_id)	# set item
+		super(Priority, self).save(*args, **kwargs)
+
+	class Meta:
+		unique_together = (('feedback', 'marked_by'), ('marked_by', 'item', 'value'))
+
+@receiver(post_save, sender=Priority)
+def priority_save_score(sender, instance, created, **kwargs):
+	if created:
+		Feedback.objects.filter(id=instance.feedback_id).update(score=F('score') + Priority.WEIGHTS[instance.value])
+
+@receiver(post_delete, sender=Priority)
+def priority_delete_score(sender, instance, **kwargs):
+	Feedback.objects.filter(id=instance.feedback_id).update(score=F('score') - Priority.WEIGHTS[instance.value])

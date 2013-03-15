@@ -1,16 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 	<div class="row">
-		<h1>{{ item.name }} 
-			<small>
-			{% if item_used_by_user %}
-				I used it
-			{% else %}
-				<a href="javascript:void(0);" id="used" item-id="{{ item.id }}">I used this</a>
-				{% include "items/not_used-modal.html" %}
-			{% endif %}
-			</small>
-		</h1>
+		<h1>{{ item.name }}</h1>
+		{% if item_used_by_user %}
+			Usage info
+		{% else %}
+			{% include "items/usage-form.html" %}
+			{% include "items/not_used-modal.html" %}
+		{% endif %}
 	</div>
 	<div class="row">
 		<div class="span4" id="pros">

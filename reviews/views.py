@@ -51,6 +51,7 @@ def vote(request, feedback_id):
 			v.delete()
 			success['revoted'] = True
 		except ObjectDoesNotExist as e:
+			# TODO: log it, email to support etc.
 			pass # means frontend problem
 	# create a vote
 	v = Vote(
