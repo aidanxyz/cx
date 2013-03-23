@@ -70,15 +70,13 @@ def view(request, item_id):
 
 	experience = None
 	add_select = {
-		'num_agrees': 'select count(*) from reviews_vote where reviews_vote.type_id=1 and reviews_vote.feedback_id = reviews_feedback.id',
-		'num_disagrees': 'select count(*) from reviews_vote where reviews_vote.type_id=2 and reviews_vote.feedback_id = reviews_feedback.id',
+		'num_agrees': 'select count(*) from reviews_vote where reviews_vote.type_id = 1 and reviews_vote.feedback_id = reviews_feedback.id',
+		'num_disagrees': 'select count(*) from reviews_vote where reviews_vote.type_id = 2 and reviews_vote.feedback_id = reviews_feedback.id',
 		'num_details': 'select count(*) from reviews_detail where reviews_feedback.id = reviews_detail.feedback_id'
 	}
 	if request.user.is_authenticated():
 		# grab user votes
 		add_select['voted_type_id'] = 'select type_id from reviews_vote where reviews_vote.feedback_id=reviews_feedback.id and reviews_vote.voted_by_id=%s' % (request.user.id)
-		# grab user favorites
-		add_select['favorited'] = 'select id from reviews_favorite where reviews_favorite.feedback_id=reviews_feedback.id and reviews_favorite.marked_by_id=%s' % (request.user.id)
 		try:
 			experience = ItemUsageExperience.objects.get(user=request.user, item=item)
 		except ItemUsageExperience.DoesNotExist:

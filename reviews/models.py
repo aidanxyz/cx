@@ -142,39 +142,3 @@ class DetailAddForm(ModelForm):
 	class Meta:
 		model = Detail
 		fields = ('body', )
-
-class Favorite(models.Model):
-	item = models.ForeignKey(Item)	# for unique indexing
-	feedback = models.ForeignKey(Feedback)
-	feedback_type = models.BooleanField()	# is_positive field for unique indexing
-	marked_by = models.ForeignKey(settings.AUTH_USER_MODEL)
-	date_marked = models.DateTimeField()
-
-	WEIGHT = 1
-
-	def save(self, request=None, *args, **kwargs):
-		if not self.id:
-			# check if user agreed the feedback
-			if request:
-				try:
-					v = Vote.objects.get(user=request.user, type_id=1, feedback_id=self.feedback.id)
-				except Vote.DoesNotExist:
-					raise MustAgreeFirst
-					
-			feedback = Feedback.objects.get(pk=self.feedback_id)
-			self.item = Item(id=feedback.item_id)	# auto set item
-			self.feedback_type = feedback.is_positive # auto set feedback type
-			self.date_marked = timezone.now() # auto set the date
-		super(Favorite, self).save(*args, **kwargs)
-
-	class Meta:
-		unique_together = (('feedback', 'marked_by'), ('item', 'feedback_type'),)
-
-@receiver(post_save, sender=Favorite)
-def favorite_save_score(sender, instance, created, **kwargs):
-	if created:
-		Feedback.objects.filter(id=instance.feedback_id).update(score=F('score') + Favorite.WEIGHT)
-
-@receiver(post_delete, sender=Favorite)
-def favorite_delete_score(sender, instance, **kwargs):
-	Feedback.objects.filter(id=instance.feedback_id).update(score=F('score') - Favorite.WEIGHT)

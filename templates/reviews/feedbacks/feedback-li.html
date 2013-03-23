@@ -14,14 +14,6 @@
 		{% else %}
 			<a class="vote" type-id="2" weight="-1" href="javascript:void(0);">Disagree(<span id='count'>{{ feedback.num_disagrees }}</span>)</a>
 		{% endif %}
-
-		{% if feedback.voted_type_id == 1 %}
-			{% if feedback.favorited %}
-				<a class="unfavorite" href="javascript:void(0);">***</a>
-			{% else %}
-				<a class="favorite" href="javascript:void(0);">***</a>
-			{% endif %}
-		{% endif %}
 	</p>
 	<p id="info">
 		<a href="/feedbacks/{{ feedback.id }}/details">Details(<span id="count">{{ feedback.num_details }}</span>)</a>
