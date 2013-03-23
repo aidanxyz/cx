@@ -1,0 +1,18 @@
+<form id="usage_form" method="post" action="/items/used/">
+	{% csrf_token %}
+	<span id="usage_sentence">I used this {{ item.category }} for 
+		<select name="duration" id="id_duration">
+			<option value="1" selected="selected">less than one month</option>
+			<option value="2">few monthes</option>
+			<option value="3">more than a year</option>
+		</select>
+		 and rate it as 
+		<select name="rating" id="id_rating">
+			<option value="1">terrible</option>
+			<option value="2">bad</option>
+			<option value="4" selected="selected">good</option>
+			<option value="5">excellent</option>
+		</select>
+		.</span>
+	<input type="submit" class="btn" />
+</form>

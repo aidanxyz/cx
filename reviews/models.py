@@ -1,14 +1,15 @@
 from django.db import models
 from django.conf import settings
-from items.models import Item
+from items.models import Item, ItemUsageExperience
 from django.forms import ModelForm
 from django.db.models.signals import post_save, pre_delete, post_delete
 from reviews.vote_type_utils import get_vt_weight
 from django.dispatch import receiver
 from django.db.models import F
 from reviews.sphinxql import sphinxql_query
-from reviews.custom_exceptions import SelfVotingException, UserDidNotUseItem, PriorityOutOfRange
+from reviews.custom_exceptions import SelfVotingException, UserDidNotUseItem, PriorityOutOfRange, MustAgreeFirst
 from customauth.models import CustomUser
+from django.utils import timezone
 
 # Create your models here.
 # pragmatique
@@ -29,8 +30,9 @@ class Feedback(models.Model):
 
 	def save(self, request=None, *args, **kwargs):
 		if request:	# if this is view call
-			user = request.user
-			if not user.items_used.filter(id=self.item_id):
+			try:
+				experience = ItemUsageExperience.objects.get(user_id=request.user.id, item_id=self.item_id)
+			except ItemUsageExperience.DoesNotExist:
 				raise UserDidNotUseItem
 		super(Feedback, self).save(*args, **kwargs)
 
@@ -90,15 +92,17 @@ class Vote(models.Model):
 		return self.type.name
 
 	def save(self, request=None, *args, **kwargs):
-		feedback = Feedback.objects.get(pk=self.feedback_id)
-		# if Jerry is trying to vote for his own feedback
-		if feedback.created_by_id == self.voted_by_id:
-			raise SelfVotingException
+		if not self.id:
+			feedback = Feedback.objects.get(pk=self.feedback_id)
+			# if Jerry is trying to vote for his own feedback
+			if feedback.created_by_id == self.voted_by_id:
+				raise SelfVotingException
 
-		if request:	# if this is view call
-			user = request.user
-			if not user.items_used.filter(id=feedback.item_id):
-				raise UserDidNotUseItem
+			if request:	# if this is view call
+				try:
+					experience = ItemUsageExperience.objects.get(user_id=request.user.id, item_id=feedback.item_id)
+				except ItemUsageExperience.DoesNotExist:
+					raise UserDidNotUseItem
 		super(Vote, self).save(*args, **kwargs)
 
 	class Meta:
@@ -122,12 +126,13 @@ class Detail(models.Model):
 	class Meta:
 		ordering = ('-date_written',)
 
-	def save(self, *args, **kwargs):
+	def save(self, request=None, *args, **kwargs):
 		feedback = Feedback.objects.get(pk=self.feedback_id)
-		user = kwargs['request'].user
-
-		if not user.items_used.filter(id=feedback.item_id):
-			raise UserDidNotUseItem
+		if request:	# if this is view call
+			try:
+				experience = ItemUsageExperience.objects.get(user_id=request.user.id, item_id=feedback.item_id)
+			except ItemUsageExperience.DoesNotExist:
+				raise UserDidNotUseItem
 		super(Detail, self).save(*args, **kwargs)
 	
 	def __unicode__(self):
@@ -138,29 +143,38 @@ class DetailAddForm(ModelForm):
 		model = Detail
 		fields = ('body', )
 
-
-class Priority(models.Model):
-	WEIGHTS = {1: 0.5, 2: 0.4, 3: 0.3, 4: 0.2, 5: 0.1}
-	item = models.ForeignKey(Item) # for unique indexing
+class Favorite(models.Model):
+	item = models.ForeignKey(Item)	# for unique indexing
 	feedback = models.ForeignKey(Feedback)
-	value = models.PositiveSmallIntegerField() # priority number: 1 - 5
-	marked_by = models.ForeignKey(CustomUser)
+	feedback_type = models.BooleanField()	# is_positive field for unique indexing
+	marked_by = models.ForeignKey(settings.AUTH_USER_MODEL)
 	date_marked = models.DateTimeField()
 
+	WEIGHT = 1
+
 	def save(self, request=None, *args, **kwargs):
-		if self.value < 1 or self.value > 5:
-			raise PriorityOutOfRange
-		self.item = Item(id=Feedback.objects.get(pk=self.feedback_id).item_id)	# set item
-		super(Priority, self).save(*args, **kwargs)
+		if not self.id:
+			# check if user agreed the feedback
+			if request:
+				try:
+					v = Vote.objects.get(user=request.user, type_id=1, feedback_id=self.feedback.id)
+				except Vote.DoesNotExist:
+					raise MustAgreeFirst
+					
+			feedback = Feedback.objects.get(pk=self.feedback_id)
+			self.item = Item(id=feedback.item_id)	# auto set item
+			self.feedback_type = feedback.is_positive # auto set feedback type
+			self.date_marked = timezone.now() # auto set the date
+		super(Favorite, self).save(*args, **kwargs)
 
 	class Meta:
-		unique_together = (('feedback', 'marked_by'), ('marked_by', 'item', 'value'))
+		unique_together = (('feedback', 'marked_by'), ('item', 'feedback_type'),)
 
-@receiver(post_save, sender=Priority)
-def priority_save_score(sender, instance, created, **kwargs):
+@receiver(post_save, sender=Favorite)
+def favorite_save_score(sender, instance, created, **kwargs):
 	if created:
-		Feedback.objects.filter(id=instance.feedback_id).update(score=F('score') + Priority.WEIGHTS[instance.value])
+		Feedback.objects.filter(id=instance.feedback_id).update(score=F('score') + Favorite.WEIGHT)
 
-@receiver(post_delete, sender=Priority)
-def priority_delete_score(sender, instance, **kwargs):
-	Feedback.objects.filter(id=instance.feedback_id).update(score=F('score') - Priority.WEIGHTS[instance.value])
+@receiver(post_delete, sender=Favorite)
+def favorite_delete_score(sender, instance, **kwargs):
+	Feedback.objects.filter(id=instance.feedback_id).update(score=F('score') - Favorite.WEIGHT)

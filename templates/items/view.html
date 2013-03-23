@@ -1,13 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
 	<div class="row">
-		<h1>{{ item.name }}</h1>
-		{% if item_used_by_user %}
-			Usage info
-		{% else %}
-			{% include "items/usage-form.html" %}
-			{% include "items/not_used-modal.html" %}
-		{% endif %}
+		<div id="item_info" item-id="{{ item.id }}">
+			<h1 id="item_name">{{ item.name }}</h1>
+			{% if experience %}
+				<span id="usage_info" class="muted">
+					You used this {{ item.category }} for <a>{{ experience.duration }}</a> and rated as <a>{{ experience.rating }}</a>
+					<a href="/item/{{ item.id }}/usage/edit/" id="edit">edit</a>
+				</span>
+			{% else %}
+				{% include "items/usage-form.html" %}
+				{% include "items/not_used-modal.html" %}
+			{% endif %}
+		</div>
 	</div>
 	<div class="row">
 		<div class="span4" id="pros">
@@ -19,7 +24,7 @@
 					{% endif %}
 				{% endfor %}
 			</ul>
-			{% if user.is_authenticated and item_used_by_user %}
+			{% if user.is_authenticated and experience %}
 				{% include "reviews/feedbacks/add.html" with is_positive=1 %}
 			{% else %}
 				<a href="javascript:void(0);" id="add_feedback">Add feedback</a>
@@ -35,7 +40,7 @@
 					{% endif %}
 				{% endfor %}
 			</ul>
-			{% if user.is_authenticated and item_used_by_user %}
+			{% if user.is_authenticated and experience %}
 				{% include "reviews/feedbacks/add.html" with is_positive=0 %}
 			{% else %}
 				<a href="javascript:void(0);" id="add_feedback">Add feedback</a>
@@ -43,6 +48,7 @@
 			{% endif %}
 		</div>
 	</div>
+	<!-- ICanHaz templates -->
 	<script type="text/html" id="feedback">
 		<li class="well" feedback-id='{% verbatim %}{{ id }}{% endverbatim %}'>
 			<span id="score">0</span>
@@ -58,10 +64,27 @@
 			</p>
 		</li>
 	</script>
+	<script type="text/html" id="usage_info">
+		<span id="usage_info" class="muted">
+			You used this {{ item.category }} for 
+			{% verbatim %}
+			<a>{{ duration }}</a> and rated as <a>{{ rating }}</a> 
+			{% endverbatim %}
+			<a href="/item/{{ item.id }}/usage/edit/" id="edit">edit</a>
+		</span>
+	</script>
+	<script type="text/html" id="similar_feedback">
+		<li id="similar_feedback">
+			{% verbatim %}
+			<a href="#">{{ body }}</a>
+			{% endverbatim %}
+		</li>
+	</script>
+	<!-- JavaScript -->
 	<script type="text/javascript">
 		$(document).ready(function() {
 			{% if user.is_authenticated %}
-				{% if item_used_by_user %}
+				{% if experience %}
 					siteNameSpace.exec('review', { is_authenticated: true, is_used: true });
 				{% else %}
 					siteNameSpace.exec('review', { is_authenticated: true, is_used: false });

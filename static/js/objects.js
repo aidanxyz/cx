@@ -137,8 +137,9 @@ function SearchWhileTyping(config) {
         url         = config.url, 
         timeout     = config.timeout,
         ich_id      = config.ich_id,    // id of ich template
-        results_sel = config.results_sel;   // element containing search results
-        wrapper_sel = config.wrapper_sel;   // parent of results element
+        results_sel = config.results_sel,   // element containing search results
+        wrapper_sel = config.wrapper_sel,   // parent of results element
+        data        = typeof config.data === 'object' ? config.data : null;
 
     function init() {
         var thread = null;
@@ -152,10 +153,12 @@ function SearchWhileTyping(config) {
     }
 
     function search(query) {
+        var to_send = $.extend({'query': query}, data);
+
         var request = $.ajax({
             type: 'GET',
             url: url,
-            data: {'query': query},
+            data: to_send,
             dataType:'json',
         });
 
@@ -229,6 +232,32 @@ var siteNameSpace = {
         },
         authenticated: {
             used: function() {
+                // searching for positive similar feedbacks
+                SearchWhileTyping({
+                    url: 'feedbacks/search/',
+                    data: {
+                        item_id: $('div#item_info').attr('item-id'), 
+                        is_positive: 1
+                    },
+                    input_sel: '#feedback_body-1',
+                    timeout: 1000,
+                    ich_id: 'similar_feedback',
+                    results_sel: 'ul#results_list-1',
+                    wrapper_sel: 'div#similar_items-1'
+                });
+                // searching for negative similar feedbacks
+                SearchWhileTyping({
+                    url: 'feedbacks/search/',
+                    data: {
+                        item_id: $('div#item_info').attr('item-id'), 
+                        is_positive: 1
+                    },
+                    input_sel: '#feedback_body-0',
+                    timeout: 1000,
+                    ich_id: 'similar_feedback',
+                    results_sel: 'ul#results_list-0',
+                    wrapper_sel: 'div#similar_items-0'
+                });
                 // adding feedback
                 $('form#add_feedback').submit(function(){
                     var form = $(this);
@@ -270,6 +299,22 @@ var siteNameSpace = {
                     console.log('click on .unvote');
                     VoteHandler($(this)).unvote();
                 });
+                // favoriting
+                $(document).on('click', '.favorite', function() {
+                    var link = $(this);
+                    feedback = link.parents('li');
+                    var request = $.ajax({
+                        url: '/feedbacks/' + feedback.attr('feedback-id') + '/favorite/',
+                        type: 'post',
+                        dataType: 'json'
+                    });
+
+                    request.done(function(data, textStatus, jqXHR) {
+                        $(this).attr('class', 'unfavorite');
+                        // hide others since we can choose only one favorite 
+                        $('.favorite').hide();
+                    });
+                })
             },
             not_used: function() {
                 // <I used it> click
@@ -281,16 +326,21 @@ var siteNameSpace = {
                     }, 1000);
                 });
 
-                $('a#used').click(function() {
-                    var link = $(this);
+                $('form#usage_form').submit(function() {
+                    var form = $(this);
                     var request = $.ajax({
-                        type: 'post',
-                        url: '/items/' + link.attr('item-id') + '/used/',
+                        type: form.attr('method'),
+                        url: form.attr('action'),
+                        data: form.serialize(),
                         dataType: 'json'
                     });
 
                     request.done(function(data, textStatus, jqXHR) {
-                        link.parent('small').text("I used it");
+                        form.after(ich.usage_info({
+                            duration: $('select#id_duration option:selected').text(),
+                            rating: $('select#id_rating option:selected').text()
+                        }));
+                        form.remove();
                         // switch event handlers to allow voting etc.
                         $('.vote, .unvote, a#add_feedback').off('click');
                         siteNameSpace.review.authenticated.used();
@@ -302,6 +352,8 @@ var siteNameSpace = {
                     request.fail(function(jqXHR, textStatus, errorThrown) {
                         siteNameSpace.common.utils.ajax_error_handler(jqXHR);
                     });
+
+                    return false;
                 });
                 // voting, unvoting, adding a feedback on unused state
                 $('.vote, .unvote, a#add_feedback').click(function() {

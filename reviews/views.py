@@ -3,8 +3,8 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required
 from customauth.decorators import login_required_ajax
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
-from reviews.models import Feedback, Vote, VoteType, Detail, DetailAddForm
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, HttpResponseForbidden
+from reviews.models import Feedback, Vote, VoteType, Detail, Favorite, DetailAddForm
 from customauth.models import CustomUser
 from items.models import Item
 from django.utils import timezone
@@ -83,7 +83,7 @@ def unvote(request, feedback_id):
 		assert v.voted_by_id == request.user.id
 		v.delete()
 	except ObjectDoesNotExist as e:
-		raise HttpResponseBadRequest("To unvote you must vote first")
+		return HttpResponseBadRequest("To unvote you must vote first")
 	else:
 		return HttpResponse(1)
 
@@ -115,8 +115,6 @@ def list_details(request, feedback_id):
 	page = request.GET.get('page')
 	if not page:
 		page = 1
-	# else:
-	# 	page = int(page)
 	feedback = Feedback.objects.get(pk=feedback_id)
 	details = Detail.objects.filter(feedback=feedback_id)
 	paginator = Paginator(details, settings.DETAILS_PER_PAGE)
@@ -129,3 +127,48 @@ def list_details(request, feedback_id):
 		'feedback': feedback,
 		'details': details_range,
 	})
+
+def add_favorite(request, feedback_id):
+	favorite = Favorite(feedback_id = feedback_id, marked_by=request.user)
+	try:
+		favorite.full_clean()
+		favorite.save(request=request)
+	except ValidationError as e:
+		return HttpResponseBadRequest(json.dumps(e.message_dict))
+	except Exception as e:
+		return HttpResponseBadRequest(json.dumps({'message': e.value}))
+	else:
+		return HttpResponse(json.dumps({
+			'id': favorite.id,
+		}))
+
+def remove_favorite(request, feedback_id):
+	try:
+		favorite = Favorite.objects.get(marked_by=request.user, feedback_id=feedback_id)
+		if favorite.marked_by_id != request.user.id:
+			return HttpResponseForbidden()
+		favorite.delete()
+	except Favorite.DoesNotExist as e:
+		return HttpResponseBadRequest("To unmark you must mark first")
+	else:
+		return HttpResponse(1)
+
+def search_feedback(request):
+	if request.method == 'GET' and request.GET:
+		query = request.GET.get('query', None)
+		item_id = request.GET.get('item_id', None)
+		is_positive = request.GET.get('is_positive', None)
+		if query and item_id and is_positive !== None:
+			db = MySQLdb.connect(host=settings.SPHINXQL_HOST, port=settings.SPHINXQL_PORT)
+			cursor = db.cursor()
+			cursor.execute("select * from reviews_feedback where match('%s')" % str(query)) # is it safe?
+			ids = tuple(row[0] for row in cursor.fetchall()) # is it efficient?
+			items = Item.objects.filter(id__in=ids)
+			result = []
+			for item in items:
+				result.append({'id': item.id, 'name': item.name})
+			return HttpResponse(json.dumps(result))
+		else:
+			return HttpResponse(json.dumps(""))
+	else:
+		raise Http404
