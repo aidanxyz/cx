@@ -42,7 +42,7 @@ class Feedback(models.Model):
 @receiver(post_save, sender=Feedback)
 def feedback_sphinx_save(sender, instance, created, **kwargs):
 	if created:
-		q = "insert into reviews_feedback values({0}, '{1}', {2}, {3})".format(instance.id, instance.body, instance.created_by_id, int(instance.is_positive))
+		q = "insert into reviews_feedback values({0}, '{1}', {2}, {3}, {4})".format(instance.id, instance.body, instance.created_by_id, int(instance.is_positive), int(instance.item_id))
 		rows_affected = sphinxql_query(q)
 		assert rows_affected > 0
 

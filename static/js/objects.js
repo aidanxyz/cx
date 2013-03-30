@@ -1,4 +1,4 @@
-// module pattern
+/* function is immediately executed; returns object closure */
 var DjangoAjaxCsrf = (function(){
     var config  = {
         cookie_name: 'csrftoken',
@@ -44,16 +44,17 @@ var DjangoAjaxCsrf = (function(){
     }
 })();
 
+/* returns object closure*/
 function VoteHandler($this) {  //"$this" is a clicked link
     var prev_vote = $this.siblings('.unvote');
-    var revote = prev_vote.length == 1;
+    var is_revote = prev_vote.length == 1;
     
     var feedback = $this.parents('li');
 
     function vote() {
         var data_to_send = {'vote_type': $this.attr('type-id')}
-        if (revote) {
-            data_to_send.revote = true;
+        if (is_revote) {
+            data_to_send.is_revote = true;
         }
         
         var request = $.ajax({
@@ -97,7 +98,7 @@ function VoteHandler($this) {  //"$this" is a clicked link
     function affect_score(weight) {
         var score = feedback.children('span#score');
         score.text(parseInt(score.text()) + weight);
-        if (revote) {
+        if (is_revote) {
             score.text(parseInt(score.text()) - parseInt(prev_vote.attr('weight')));
         }
     }
@@ -105,7 +106,7 @@ function VoteHandler($this) {  //"$this" is a clicked link
     function affect_count(weight) {
         var count = $this.children('span#count');
         count.text(parseInt(count.text()) + weight);
-        if (revote) {
+        if (is_revote) {
             var prev_count = prev_vote.children('span#count');
             prev_count.text(parseInt(prev_count.text()) - weight);
         }
@@ -113,7 +114,7 @@ function VoteHandler($this) {  //"$this" is a clicked link
 
     function change_class_to(new_class) {
         $this.attr('class', opposite(opposite(new_class)));
-        if (revote) {
+        if (is_revote) {
             prev_vote.attr('class', opposite(new_class));
         }
     }
@@ -131,60 +132,37 @@ function VoteHandler($this) {  //"$this" is a clicked link
     }
 }
 
-function SearchWhileTyping(config) {
+/* usual function; returns void */
+function get_similars(query, url, results_wrapper, ich_id, add_data) {
+    var results_list = results_wrapper.children('ul:first');
+    var to_send = $.extend({'query': query}, add_data);
+    var request = $.ajax({
+        type: 'GET',
+        url: url,
+        data: to_send,
+        dataType:'json',
+    });
 
-    var input_sel   = config.input_sel, 
-        url         = config.url, 
-        timeout     = config.timeout,
-        ich_id      = config.ich_id,    // id of ich template
-        results_sel = config.results_sel,   // element containing search results
-        wrapper_sel = config.wrapper_sel,   // parent of results element
-        data        = typeof config.data === 'object' ? config.data : null;
+    request.done(function(data, textStatus, jqXHR) {
+        if (data.length == 0) {
+            results_wrapper.hide();
+        }
+        else {
+            // clear the list
+            results_list.html("");
 
-    function init() {
-        var thread = null;
-        $(input_sel).keyup(function(){
-            clearTimeout(thread);
-            var form = $(this);
-            thread = setTimeout(function(){
-                search(form.val());
-            }, timeout);
-        });
-    }
+            $.each(data, function(i, obj){
+                // html_item = ich.similar_item({id: 5, name: 'some name'});
+                html_elem = ich[ich_id](obj);
+                results_list.append(html_elem);
+            });
+            results_wrapper.show();
+        }
+    });
 
-    function search(query) {
-        var to_send = $.extend({'query': query}, data);
-
-        var request = $.ajax({
-            type: 'GET',
-            url: url,
-            data: to_send,
-            dataType:'json',
-        });
-
-        request.done(function(data, textStatus, jqXHR) {
-            if (data.length == 0) {
-                $(wrapper_sel).hide();
-            }
-            else {
-                // clear the list
-                $(results_sel).html("");
-
-                $.each(data, function(i, obj){
-                    // html_item = ich.similar_item({id: 5, name: 'some name'});
-                    html_elem = ich[ich_id](obj);
-                    $(results_sel).append(html_elem);
-                });
-                $(wrapper_sel).show();
-            }
-        });
-
-        request.fail(function(jqXHR, textStatus, errorThrown) {
-            alert(jqXHR.responseText);
-        });
-    }
-
-    init();
+    request.fail(function(jqXHR, textStatus, errorThrown) {
+        alert(jqXHR.responseText);
+    });
 }
 
 // object literal pattern
@@ -204,6 +182,13 @@ var siteNameSpace = {
                 }
             }
         },
+        /* #idea 
+         * You say: new Feedback({vote: $(this)}), -it actually can be any structure with 
+         * any possible one-key object as arg, and it 
+         * gives you an object with everything related to Feedback such as votes, body, etc
+         * So, not HTML dictates JS (jquery), but JS builds HTML. Therefore it should have a function 
+         * 'build()' which returns an HTML of complete feedback with provided values
+         **/
     },
     mainpage: {
         init: function(){
@@ -213,6 +198,9 @@ var siteNameSpace = {
     review: {
         config: {
             is_authenticated: false,
+        },
+        selectors: {
+
         },
         init: function(config) {
             if (config && typeof config === 'object') {
@@ -232,31 +220,21 @@ var siteNameSpace = {
         },
         authenticated: {
             used: function() {
-                // searching for positive similar feedbacks
-                SearchWhileTyping({
-                    url: 'feedbacks/search/',
-                    data: {
-                        item_id: $('div#item_info').attr('item-id'), 
-                        is_positive: 1
-                    },
-                    input_sel: '#feedback_body-1',
-                    timeout: 1000,
-                    ich_id: 'similar_feedback',
-                    results_sel: 'ul#results_list-1',
-                    wrapper_sel: 'div#similar_items-1'
-                });
-                // searching for negative similar feedbacks
-                SearchWhileTyping({
-                    url: 'feedbacks/search/',
-                    data: {
-                        item_id: $('div#item_info').attr('item-id'), 
-                        is_positive: 1
-                    },
-                    input_sel: '#feedback_body-0',
-                    timeout: 1000,
-                    ich_id: 'similar_feedback',
-                    results_sel: 'ul#results_list-0',
-                    wrapper_sel: 'div#similar_items-0'
+                /**
+                 * searching for positive/negative similar feedbacks 
+                 * grabs data from HTML div data-simi
+                 */
+                $('div[data-similars]').each(function(index) {
+                    var options = $(this).data('similars');
+                    var input = $(this).siblings('input[name=' + options.input_name + ']');
+                    var results_wrapper = $(this);
+                    var thread = null;
+                    $(input).keyup(function() {
+                        clearTimeout(thread);
+                        thread = setTimeout(function(){
+                            get_similars(input.val(), options.url, results_wrapper, options.ich_id, options.data);
+                        }, 1000);
+                    });
                 });
                 // adding feedback
                 $('form#add_feedback').submit(function(){
@@ -364,13 +342,17 @@ var siteNameSpace = {
     },
     item_add: {
         init: function() {
-            SearchWhileTyping({
-                url: '/items/search',
-                input_sel: '#id_name',
-                timeout: 1000,
-                ich_id: 'similar_item',
-                results_sel: 'ul#results_list',
-                wrapper_sel: 'div#similar_items'
+            // fetching similar items
+            var MIN_MODEL_NAME = 1;
+            var similars_wrapper = $('div[data-similars]');
+            var options = similars_wrapper.data('similars');
+            var input = similars_wrapper.siblings('input[name=' + options.input_name + ']');
+            var thread = null;
+            $(input).keyup(function(){
+                clearTimeout(thread);
+                thread = setTimeout(function(){
+                    get_similars(input.val(), options.url, similars_wrapper, options.ich_id);
+                }, 1000);
             });
         }
     },

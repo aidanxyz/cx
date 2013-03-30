@@ -1,13 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
-	<div id="similar_items" style="display:none;">
-		<h5>Make sure you don't repeat these:</h5>
-		<ul id="results_list">
-		</ul>
-	</div>
 	<form method="post" action='{% url "items.views.add" %}'>
 		{% csrf_token %}
-		{{ form.as_p }}
+		{{ form.non_field_errors }}
+	    <div class="fieldWrapper">
+	        {{ form.name.errors }}
+	        <label for="id_name">Name:</label>
+	        {{ form.name }}
+	        <!-- similar items -->
+		    <div id="similar_items" data-similars='{"input_name": "name", "url": "/items/search/", "ich_id": "similar_item"}' style="display:none;">
+				<h5>Make sure you are not repeating these:</h5>
+				<ul id="results_list">
+				</ul>
+			</div>
+	    </div>
+	    <div class="fieldWrapper">
+	        {{ form.category.errors }}
+	        <label for="id_category">Category:</label>
+	        {{ form.category }}
+	    </div>
 		<input type="submit" value="add" />
 	</form>
 	<script type="text/javascript">

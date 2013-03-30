@@ -52,7 +52,10 @@ def search(request):
 			cursor = db.cursor()
 			cursor.execute("select * from items_item where match('@name %s')" % str(query)) # is it safe?
 			ids = tuple(row[0] for row in cursor.fetchall()) # is it efficient?
-			items = Item.objects.filter(id__in=ids)
+			items = Item.objects.filter(id__in=ids).extra(
+				select={'manual': 'FIELD(id, %s)' % ','.join(map(str, ids))},
+				order_by=['manual']
+				)
 			result = []
 			for item in items:
 				result.append({'id': item.id, 'name': item.name})

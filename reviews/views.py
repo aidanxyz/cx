@@ -15,6 +15,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import F
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.conf import settings
+import MySQLdb
 
 @login_required_ajax
 @require_POST
@@ -136,12 +137,18 @@ def search_feedback(request):
 		if query and item_id and is_positive != None:
 			db = MySQLdb.connect(host=settings.SPHINXQL_HOST, port=settings.SPHINXQL_PORT)
 			cursor = db.cursor()
-			cursor.execute("select * from reviews_feedback where match('%s')" % str(query)) # is it safe?
+			query = query.strip()
+			query = " | ".join(query.split(' '))
+			print query
+			cursor.execute("select * from reviews_feedback where match('@body {0}') and item_id={1} and is_positive={2} OPTION ranker=matchany".format(query, int(item_id), int(is_positive))) # is it safe?
 			ids = tuple(row[0] for row in cursor.fetchall()) # is it efficient?
-			items = Item.objects.filter(id__in=ids)
+			feedbacks = Feedback.objects.filter(id__in=ids).extra(
+				select={'manual': 'FIELD(id, %s)' % ','.join(map(str, ids))},
+				order_by=['manual']
+				)
 			result = []
-			for item in items:
-				result.append({'id': item.id, 'name': item.name})
+			for feedback in feedbacks:
+				result.append({'id': feedback.id, 'body': feedback.body})
 			return HttpResponse(json.dumps(result))
 		else:
 			return HttpResponse(json.dumps(""))
