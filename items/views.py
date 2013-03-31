@@ -36,7 +36,7 @@ def add(request):
 				category=form.cleaned_data['category']
 			)
 			i.save()
-			return HttpResponseRedirect(reverse('items.views.index'))
+			return HttpResponseRedirect(reverse('items.views.view', kwargs={'item_id': i.id}))
 	else:
 		form = ItemAddForm() # An unbound form
 

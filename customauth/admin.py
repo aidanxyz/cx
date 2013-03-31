@@ -42,11 +42,11 @@ class CustomUserAdmin(UserAdmin):
 	add_form = UserCreationForm
 
 	list_display = ('email', 'full_name', 'password')
-	list_filter = ('is_admin',)
+	list_filter = ('is_superuser',)
 	fieldsets = (
 		(None, {'fields': ('email', 'password',)}),
 		('Personal Info', {'fields': ('full_name',)}),
-		('Permissions', {'fields': ('is_admin',)}),
+		('Permissions', {'fields': ('is_superuser',)}),
 		('Important dates', {'fields': ('last_login',)}),
 	)
 	add_fieldsets = (
@@ -63,4 +63,4 @@ class CustomUserAdmin(UserAdmin):
 admin.site.register(CustomUser, CustomUserAdmin)
 # ... and, since we're not using Django's builtin Permissions,
 # unregister the Group model from admin
-admin.site.unregister(Group)
+# admin.site.unregister(Group)

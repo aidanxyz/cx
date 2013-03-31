@@ -16,6 +16,12 @@ class Item(models.Model):
 	date_created = models.DateTimeField('date created')
 	created_by = models.ForeignKey(settings.AUTH_USER_MODEL)
 	category = models.ForeignKey(Category)
+	STATUS_CHOICES = (
+		('NC', 'Not checked'),
+		('C', 'Checked'),
+		('NA', 'Not active')
+	)
+	status = models.CharField(max_length=2, choices=STATUS_CHOICES, default='NC')
 	
 	def __unicode__(self):
 		return self.name
