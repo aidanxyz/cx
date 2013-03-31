@@ -11,5 +11,9 @@ class PriorityOutOfRange(Exception):
 		self.value = value
 
 class MustAgreeFirst(Exception):
-	def  __init__(self, value="Before marking as favorite you need to agree with feedback first"):
+	def  __init__(self, value="Before setting priority you need to agree with feedback first"):
+		self.value = value
+
+class DuplicatePriorityPerColumn(Exception):
+	def  __init__(self, value="Duplicate priority per feedbacks column"):
 		self.value = value

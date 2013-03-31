@@ -7,7 +7,7 @@ from reviews.vote_type_utils import get_vt_weight
 from django.dispatch import receiver
 from django.db.models import F
 from reviews.sphinxql import sphinxql_query
-from reviews.custom_exceptions import SelfVotingException, UserDidNotUseItem, PriorityOutOfRange, MustAgreeFirst
+from reviews.custom_exceptions import SelfVotingException, UserDidNotUseItem, PriorityOutOfRange, MustAgreeFirst, DuplicatePriorityPerColumn
 from customauth.models import CustomUser
 from django.utils import timezone
 
@@ -127,8 +127,8 @@ class Detail(models.Model):
 		ordering = ('-date_written',)
 
 	def save(self, request=None, *args, **kwargs):
-		feedback = Feedback.objects.get(pk=self.feedback_id)
 		if request:	# if this is view call
+			feedback = Feedback.objects.get(pk=self.feedback_id)
 			try:
 				experience = ItemUsageExperience.objects.get(user_id=request.user.id, item_id=feedback.item_id)
 			except ItemUsageExperience.DoesNotExist:
@@ -142,3 +142,34 @@ class DetailAddForm(ModelForm):
 	class Meta:
 		model = Detail
 		fields = ('body', )
+
+class Priority(models.Model):
+	feedback = models.ForeignKey(Feedback)
+	marked_by = models.ForeignKey(settings.AUTH_USER_MODEL)
+	value = models.PositiveSmallIntegerField()
+	date_marked = models.DateTimeField()
+	feedback_item_id = models.ForeignKey(Item)
+
+	VALUE_RANGE = (1, 3)
+
+	def save(self, request=None, *args, **kwargs):
+		if request:	# if save() was called from view
+			agree_votetype_id = 1 # VoteType.objects.get(name='Agree').id
+			
+			try:
+				vote = Vote.objects.get(voted_by=request.user.id, feedback_id=self.feedback_id, type_id=agree_votetype_id)
+			except Vote.DoesNotExist:
+				raise MustAgreeFirst
+
+			if value < VALUE_RANGE[0] or value > VALUE_RANGE[1]:
+				raise PriorityOutOfRange
+			
+			feedback = Feedback.objects.get(pk=self.feedback_id)
+			priority = Priority.objects.filter(feedback__item=feedback.item_id, feedback__is_positive=feedback.is_positive, value=self.value, marked_by=request.user.id)
+			if priority:
+				raise DuplicatePriorityPerColumn
+
+		super(Priority, self).save(*args, **kwargs)
+
+	class Meta:
+		unique_together = ('feedback', 'marked_by')
