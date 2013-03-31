@@ -44,10 +44,11 @@ def add_feedback(request, item_id):
 @require_POST
 def vote(request, feedback_id):
 	success = {}
-	if 'revote' in request.POST and request.POST['revote']:
+	if 'is_revote' in request.POST and request.POST['is_revote']:
 		# delete previous vote
 		try:
 			v = Vote.objects.get(feedback=feedback_id, voted_by=request.user.id)
+			print v
 			assert v.type_id != int(request.POST['vote_type']), 'Trying to repeat vote'
 			v.delete()
 			success['revoted'] = True

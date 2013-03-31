@@ -7,7 +7,7 @@ from reviews.vote_type_utils import get_vt_weight
 from django.dispatch import receiver
 from django.db.models import F
 from reviews.sphinxql import sphinxql_query
-from reviews.custom_exceptions import SelfVotingException, UserDidNotUseItem, PriorityOutOfRange, MustAgreeFirst, DuplicatePriorityPerColumn
+from reviews.custom_exceptions import UserDidNotUseItem, PriorityOutOfRange, MustAgreeFirst, DuplicatePriorityPerColumn
 from customauth.models import CustomUser
 from django.utils import timezone
 
@@ -94,9 +94,6 @@ class Vote(models.Model):
 	def save(self, request=None, *args, **kwargs):
 		if not self.id:
 			feedback = Feedback.objects.get(pk=self.feedback_id)
-			# if Jerry is trying to vote for his own feedback
-			if feedback.created_by_id == self.voted_by_id:
-				raise SelfVotingException
 
 			if request:	# if this is view call
 				try:
