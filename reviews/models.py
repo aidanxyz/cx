@@ -23,6 +23,15 @@ class Feedback(models.Model):
 	score = models.IntegerField(default=0)
 	is_active = models.BooleanField(default=True)
 	date_edited = models.DateTimeField('date last edited', null=True, blank=True)
+	
+	agrees_count = models.PositiveIntegerField(default=0)
+	disagrees_count = models.PositiveIntegerField(default=0)
+	
+	details_count = models.PositiveIntegerField(default=0)
+
+	priority_1_count = models.PositiveIntegerField(default=0)
+	priority_2_count = models.PositiveIntegerField(default=0)
+	priority_3_count = models.PositiveIntegerField(default=0)
 
 	class Meta:
 		unique_together = ('body', 'item', 'is_positive')
@@ -106,13 +115,23 @@ class Vote(models.Model):
 		unique_together = ('feedback', 'voted_by')
 
 @receiver(post_save, sender=Vote)
-def vote_save_score(sender, instance, created, **kwargs):
+def vote_post_save(sender, instance, created, **kwargs):
 	if created:
 		Feedback.objects.filter(id=instance.feedback_id).update(score=F('score') + get_vt_weight(int(instance.type_id)))
 
+		if instance.type_id == 1:	# Agree
+			Feedback.objects.filter(id=instance.feedback_id).update(agrees_count=F('agrees_count') + 1)
+		elif instance.type_id == 2:	# Disagree
+			Feedback.objects.filter(id=instance.feedback_id).update(disagrees_count=F('disagrees_count') + 1)
+
 @receiver(post_delete, sender=Vote)
-def vote_delete_score(sender, instance, **kwargs):
+def vote_post_delete(sender, instance, **kwargs):
 	Feedback.objects.filter(id=instance.feedback_id).update(score=F('score') - get_vt_weight(int(instance.type_id)))
+
+	if instance.type_id == 1:	# vote.type_id = 1 is Agree
+		Feedback.objects.filter(id=instance.feedback_id).update(agrees_count=F('agrees_count') - 1)
+	elif instance.type_id == 2:	# Disagree
+		Feedback.objects.filter(id=instance.feedback_id).update(disagrees_count=F('disagrees_count') - 1)
 
 class Detail(models.Model):
 	body = models.TextField()
@@ -134,6 +153,15 @@ class Detail(models.Model):
 	
 	def __unicode__(self):
 		return self.body[:20] + "..."
+
+@receiver(post_save, sender=Detail)
+def detail_post_save(sender, instance, created, **kwargs):
+	if created:
+		Feedback.objects.filter(id=instance.feedback_id).update(details_count=F('details_count') + 1)
+
+@receiver(post_delete, sender=Detail)
+def detail_post_delete(sender, instance, **kwargs):
+	Feedback.objects.filter(id=instance.feedback_id).update(details_count=F('details_count') - 1)
 
 class DetailAddForm(ModelForm):
 	class Meta:
@@ -158,7 +186,7 @@ class Priority(models.Model):
 			except Vote.DoesNotExist:
 				raise MustAgreeFirst
 
-			if value < VALUE_RANGE[0] or value > VALUE_RANGE[1]:
+			if self.value < self.VALUE_RANGE[0] or self.value > self.VALUE_RANGE[1]:
 				raise PriorityOutOfRange
 			
 			feedback = Feedback.objects.get(pk=self.feedback_id)
@@ -170,3 +198,22 @@ class Priority(models.Model):
 
 	class Meta:
 		unique_together = ('feedback', 'marked_by')
+
+@receiver(post_save, sender=Priority)
+def priority_post_save(sender, instance, created, **kwargs):
+	if created:
+		if instance.value == 1:
+			Feedback.objects.filter(id=instance.feedback_id).update(priority_1_count=F('priority_1_count') + 1)
+		elif instance.value == 2:
+			Feedback.objects.filter(id=instance.feedback_id).update(priority_1_count=F('priority_1_count') + 2)
+		elif instance.value == 3:
+			Feedback.objects.filter(id=instance.feedback_id).update(priority_1_count=F('priority_1_count') + 3)
+
+@receiver(post_delete, sender=Priority)
+def priority_post_delete(sender, instance, **kwargs):
+	if instance.value == 1:
+		Feedback.objects.filter(id=instance.feedback_id).update(priority_1_count=F('priority_1_count') - 1)
+	elif instance.value == 2:
+		Feedback.objects.filter(id=instance.feedback_id).update(priority_1_count=F('priority_1_count') - 2)
+	elif instance.value == 3:
+		Feedback.objects.filter(id=instance.feedback_id).update(priority_1_count=F('priority_1_count') - 3)
