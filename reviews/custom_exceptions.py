@@ -10,6 +10,6 @@ class MustAgreeFirst(Exception):
 	def  __init__(self, value="Before setting priority you need to agree with feedback first"):
 		self.value = value
 
-class DuplicatePriorityPerColumn(Exception):
-	def  __init__(self, value="Duplicate priority per feedbacks column"):
+class WrongOrderPriority(Exception):
+	def  __init__(self, value="Wrong order or duplicate priority per feedbacks column"):
 		self.value = value

@@ -5,8 +5,12 @@
 		<h3>Verification</h3>
 	</div>
 	<div class="modal-body">
-		<h4>In order to perform actions you need to assure that you used this item</h4>
-		<button class="btn btn-primary" id="used">I used it</button>
+		<h4 class="text-warning">In order to perform actions you need to assure that you used this item</h4>
+		<form id="usage_form" method="post" action="/items/{{ item.id }}/usage/add/">
+			{% csrf_token %}
+			<span id="usage_sentence">I used this {{ item.category }} for {{ usage_form.duration }} and rate it as {{ usage_form.rating }}</span>
+			<button type="submit" class="btn">Submit <i class="icon-ok-sign"></i></button>
+		</form>
 	</div>
 	<div class="modal-footer">
 		<a href="#" class="btn" data-dismiss="modal">Cancel</a>

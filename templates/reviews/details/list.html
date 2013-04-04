@@ -2,8 +2,9 @@
 {% block content %}
 	<h2><a href="/items/{{ feedback.item_id }}/">{{ feedback.item.name }}</a></h2>
 	<h1 feedback-id="{{ feedback.id }}">{{ feedback.body }}</h1>
-	<form action="/feedbacks/{{ feedback.id }}/details/add" method="post" id="detail">
-		<input type="text" name="body">
+	<form action="/feedbacks/{{ feedback.id }}/details/add/" method="post" id="detail">
+		{% csrf_token %}
+		<textarea name="body" id="detail_body"></textarea>
 		<input type="submit" value="Add">
 	</form>
 	<div id="details">
@@ -27,17 +28,19 @@
 				<a href="?page={{ details.next_page_number }}">next</a>
 			{% endif %}
 		</p>
-		{% for page_num in details.paginator.page_range|slice:":2" %}
-			<a href="?page={{ page_num }}">{{ page_num }} </a>
-		{% endfor %}
-		...
-		{% for page_num in details.paginator.page_range|slice:"-2:" %}
-			<a href="?page={{ page_num }}">{{ page_num }} </a>
-		{% endfor %}
+		{% if details.paginator.count > 3 %}
+			{% for page_num in details.paginator.page_range|slice:":2" %}
+				<a href="?page={{ page_num }}">{{ page_num }} </a>
+			{% endfor %}
+			...
+			{% for page_num in details.paginator.page_range|slice:"-2:" %}
+				<a href="?page={{ page_num }}">{{ page_num }} </a>
+			{% endfor %}
+		{% endif %}
 	</div>
 	<script type="text/javascript">
 		$(document).ready(function() {
-			siteNameSpace.apply("detail_add");
+			siteNameSpace.exec("details");
 		})
 	</script>
 	<script type="text/html" id="detail">

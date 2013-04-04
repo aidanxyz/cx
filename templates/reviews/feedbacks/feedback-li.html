@@ -1,5 +1,5 @@
 <!-- Feedback body -->
-<li class="well" id='feedback' feedback-id='{{ feedback.id }}'>
+<li class="well feedback" id='{{ feedback.id }}'>
 	<span id="score">{{ feedback.score }}</span>
 	{{ feedback.body }}
 	<p id="actions">
@@ -14,8 +14,19 @@
 		{% else %}
 			<a class="vote" type-id="2" weight="-1" href="javascript:void(0);">Disagree(<span id='count'>{{ feedback.disagrees_count }}</span>)</a>
 		{% endif %}
+
+		{% if feedback.priority_value %}
+			<a href="javascript:void(0);" class="unset_priority">{{ feedback.priority_value }}</a>
+		{% elif feedback.voted_type_id == 1 %}
+			<a href="javascript:void(0);" class="set_priority"></a>
+		{% endif %}
 	</p>
-	<p id="info">
-		<a href="/feedbacks/{{ feedback.id }}/details">Details(<span id="count">{{ feedback.details_count }}</span>)</a>
-	</p>
+	<div id="info">
+		<p id="priorities">
+			priority stats: 1: <span class="priority" id="1">{{ feedback.priority_1_count }}</span>, 2: <span class="priority" id="2">{{ feedback.priority_2_count }}</span>, 3: <span class="priority" id="3">{{ feedback.priority_3_count }}</span>
+		</p>
+		<p id="details">
+			<a href="/feedbacks/{{ feedback.id }}/details">Details(<span id="count">{{ feedback.details_count }}</span>)</a>
+		</p>
+	</div>
 </li>

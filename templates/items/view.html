@@ -1,20 +1,23 @@
 {% extends "base.html" %}
 {% block content %}
 	<div class="row">
-		<div id="item_info" item-id="{{ item.id }}">
-			<h1 id="item_name">{{ item.name }}</h1>
-			{% if experience %}
-				<span id="usage_info" class="muted">
-					You used this {{ item.category }} for <a>{{ experience.duration }}</a> and rated as <a>{{ experience.rating }}</a>
-					<a href="/item/{{ item.id }}/usage/edit/" id="edit">edit</a>
-				</span>
-			{% else %}
-				{% include "items/usage-form.html" %}
-				{% include "items/not_used-modal.html" %}
-			{% endif %}
+		<div class="span9">
+			<div id="item_info" item-id="{{ item.id }}">
+				<h1 id="item_name">{{ item.name }}</h1>
+				{% if experience %}
+					<span id="usage_info" class="muted">
+						You used this {{ item.category }} for <a>{{ experience.duration }}</a> and rated as <a>{{ experience.rating }}</a>
+						<a href="/item/{{ item.id }}/usage/edit/" id="edit">edit</a>
+					</span>
+				{% else %}
+					{% include "items/usage-form.html" %}
+					{% include "items/not_used-modal.html" %}
+				{% endif %}
+			</div>
 		</div>
 	</div>
 	<div class="row">
+		<div class="span1"></div>
 		<div class="span4" id="pros">
 			<h3>What I like:</h3>
 			<ul>
@@ -59,9 +62,14 @@
 				<a class="vote" type-id="1" weight="1" href="javascript:void(0);">Agree(<span id='count'>0</span>) </a>
 				<a class="vote" type-id="2" weight="-1" href="javascript:void(0);">Disagree(<span id='count'>0</span>)</a>
 			</p>
-			<p id="info">
-				<a href="javascript:void(0);">Details(<span id="count">0</span>)</a>
-			</p>
+			<div id="info">
+				<p id="priorities">
+					priorities: 1: <span class="priority" id="1">0</span>, 2: <span class="priority" id="2">0</span>, 3: <span class="priority" id="3">0</span>
+				</p>
+				<p id="details">
+					<a href="/feedbacks/{% verbatim %}{{ id }}{% endverbatim %}/details">Details(<span id="count">0</span>)</a>
+				</p>
+			</div>
 		</li>
 	</script>
 	<script type="text/html" id="usage_info">
@@ -76,9 +84,14 @@
 	<script type="text/html" id="similar_feedback">
 		<li id="similar_feedback">
 			{% verbatim %}
-			<a href="#">{{ body }}</a>
+			<a href="#{{ id }}">{{ body }}</a>
 			{% endverbatim %}
 		</li>
+	</script>
+	<script type="text/html" id="set_priority">
+		{% verbatim %}
+		<a href="javascript:void(0);" class="set_priority">{{ value }}</a>
+		{% endverbatim %}
 	</script>
 	<!-- JavaScript -->
 	<script type="text/javascript">

@@ -34,7 +34,7 @@ class ItemAddForm(ModelForm):
 post_save.connect(save_item_sphinx, sender=Item)
 pre_delete.connect(delete_item_sphinx, sender=Item)
 
-class ItemUsageDuration(models.Model):
+class ItemUsageDurationType(models.Model):
 	string = models.CharField(max_length=255)
 	value = models.PositiveSmallIntegerField()
 
@@ -44,7 +44,7 @@ class ItemUsageDuration(models.Model):
 	def __unicode__(self):
 		return self.string
 
-class ItemUsageRating(models.Model):
+class ItemUsageRatingType(models.Model):
 	string = models.CharField(max_length=64)
 	value = models.PositiveSmallIntegerField()
 
@@ -57,8 +57,8 @@ class ItemUsageRating(models.Model):
 class ItemUsageExperience(models.Model):
 	user = models.ForeignKey(settings.AUTH_USER_MODEL)
 	item = models.ForeignKey(Item)
-	duration = models.ForeignKey(ItemUsageDuration, default=1)
-	rating = models.ForeignKey(ItemUsageRating, default=4)
+	duration = models.ForeignKey(ItemUsageDurationType, default=1)
+	rating = models.ForeignKey(ItemUsageRatingType, default=4)
 	date_verified = models.DateTimeField('date when user verified usage')
 
 class ItemUsageForm(ModelForm):

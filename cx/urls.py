@@ -20,5 +20,7 @@ urlpatterns = patterns('',
     url(r'^feedbacks/(?P<feedback_id>\d+)/unvote/$', 'reviews.views.unvote'), # /feedbacks/2334/unvote
     url(r'^feedbacks/(?P<feedback_id>\d+)/details/$', 'reviews.views.list_details'), # /feedbacks/4556/details/
     url(r'^feedbacks/(?P<feedback_id>\d+)/details/add/$', 'reviews.views.add_detail'), # /feedbacks/4556/details/add
+    url(r'^feedbacks/(?P<feedback_id>\d+)/priority/set/$', 'reviews.views.set_priority'), # /feedbacks/4556/priority/set
+    url(r'^feedbacks/(?P<feedback_id>\d+)/priority/unset/$', 'reviews.views.unset_priority'), # /feedbacks/4556/priority/unset
     url(r'^feedbacks/search/$', 'reviews.views.search_feedback')
 )
