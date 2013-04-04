@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from customauth.decorators import login_required_ajax
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, HttpResponseForbidden
-from reviews.models import Feedback, Vote, VoteType, Detail, DetailAddForm
+from reviews.models import Feedback, Vote, VoteType, Detail, DetailAddForm, Priority
 from customauth.models import CustomUser
 from items.models import Item
 from django.utils import timezone
@@ -44,10 +44,11 @@ def add_feedback(request, item_id):
 @require_POST
 def vote(request, feedback_id):
 	success = {}
-	if 'revote' in request.POST and request.POST['revote']:
+	if 'is_revote' in request.POST and request.POST['is_revote']:
 		# delete previous vote
 		try:
 			v = Vote.objects.get(feedback=feedback_id, voted_by=request.user.id)
+			print v
 			assert v.type_id != int(request.POST['vote_type']), 'Trying to repeat vote'
 			v.delete()
 			success['revoted'] = True
@@ -154,3 +155,38 @@ def search_feedback(request):
 			return HttpResponse(json.dumps(""))
 	else:
 		raise Http404
+
+@require_POST
+@login_required_ajax
+def set_priority(request, feedback_id):
+	value = request.POST.get('value', None)
+	if not value:
+		raise HttpResponseBadRequest(json.dumps({'message': 'Not enough arguments'}))
+
+	try:
+		priority = Priority(
+			feedback=Feedback(id=feedback_id),
+			value=int(value)
+		)
+		priority.save(request=request)
+	except Exception as e:
+		return HttpResponseBadRequest(json.dumps({'message': e.value}))
+
+	return HttpResponse(1)
+
+@require_POST
+@login_required_ajax
+def unset_priority(request, feedback_id):
+	value = request.POST.get('value', None)
+	if not value:
+		raise HttpResponseBadRequest(json.dumps({'message': 'Not enough arguments'}))
+	
+	try:
+		Priority.objects.get(feedback_id=feedback_id, marked_by=request.user.id, value=value).delete(request=request)
+	except Priority.DoesNotExist:
+		return HttpResponseBadRequest(json.dumps({'message': 'No such Priority'}))
+	except Exception as e:
+		return HttpResponseBadRequest(json.dumps({'message': e.value}))
+
+	return HttpResponse(1)
+	

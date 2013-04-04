@@ -1,7 +1,3 @@
-class SelfVotingException(Exception):
-	def __init__(self, value="You can't vote for feedback you created"):
-		self.value = value
-
 class UserDidNotUseItem(Exception):
 	def __init__(self, value="You didn't use this item"):
 		self.value = value
@@ -11,5 +7,9 @@ class PriorityOutOfRange(Exception):
 		self.value = value
 
 class MustAgreeFirst(Exception):
-	def  __init__(self, value="Before marking as favorite you need to agree with feedback first"):
+	def  __init__(self, value="Before setting priority you need to agree with feedback first"):
+		self.value = value
+
+class WrongOrderPriority(Exception):
+	def  __init__(self, value="Wrong order or duplicate priority per feedbacks column"):
 		self.value = value

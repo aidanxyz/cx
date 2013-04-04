@@ -8,7 +8,7 @@ from customauth.decorators import login_required_ajax
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from customauth.models import CustomUser
-from items.models import ItemUsageExperience, ItemUsageForm, ItemUsageDuration, ItemUsageRating
+from items.models import ItemUsageExperience, ItemUsageForm, ItemUsageDurationType, ItemUsageRatingType
 from django.core import serializers
 from django.conf import settings
 import MySQLdb
@@ -16,7 +16,7 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 
 def index(request):
-	latest_item_list = Item.objects.all().order_by('-date_created')[:5]
+	latest_item_list = Item.objects.all().order_by('-date_created')
 	t = loader.get_template('items/index.html')
 	rc = RequestContext(request, {
 		'latest_item_list': latest_item_list,
@@ -36,7 +36,7 @@ def add(request):
 				category=form.cleaned_data['category']
 			)
 			i.save()
-			return HttpResponseRedirect(reverse('items.views.index'))
+			return HttpResponseRedirect(reverse('items.views.view', kwargs={'item_id': i.id}))
 	else:
 		form = ItemAddForm() # An unbound form
 
@@ -72,14 +72,12 @@ def view(request, item_id):
 		raise Http404
 
 	experience = None
-	add_select = {
-		'num_agrees': 'select count(*) from reviews_vote where reviews_vote.type_id = 1 and reviews_vote.feedback_id = reviews_feedback.id',
-		'num_disagrees': 'select count(*) from reviews_vote where reviews_vote.type_id = 2 and reviews_vote.feedback_id = reviews_feedback.id',
-		'num_details': 'select count(*) from reviews_detail where reviews_feedback.id = reviews_detail.feedback_id'
-	}
+	add_select = {}
 	if request.user.is_authenticated():
-		# grab user votes
+		# votes by user
 		add_select['voted_type_id'] = 'select type_id from reviews_vote where reviews_vote.feedback_id=reviews_feedback.id and reviews_vote.voted_by_id=%s' % (request.user.id)
+		# priorities set by user
+		add_select['priority_value'] = 'select value from reviews_priority where reviews_priority.feedback_id=reviews_feedback.id and reviews_priority.marked_by_id=%s' % (request.user.id)
 		try:
 			experience = ItemUsageExperience.objects.get(user=request.user, item=item)
 		except ItemUsageExperience.DoesNotExist:
@@ -104,8 +102,8 @@ def add_usage_experience(request, item_id):
 		raise Http404
 	experience = ItemUsageExperience(user=request.user, 
 		item=item, 
-		duration=ItemUsageDuration(id=request.POST.get('duration')), 
-		rating=ItemUsageRating(id=request.POST.get('rating')),
+		duration=ItemUsageDurationType(id=request.POST.get('duration')), 
+		rating=ItemUsageRatingType(id=request.POST.get('rating')),
 		date_verified=timezone.now()
 	)
 	try:

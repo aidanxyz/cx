@@ -1,7 +1,7 @@
-from items.models import Category, Item, ItemUsageDuration, ItemUsageRating
+from items.models import Category, Item, ItemUsageDurationType, ItemUsageRatingType
 from django.contrib import admin
 
 admin.site.register(Category)
 admin.site.register(Item)
-admin.site.register(ItemUsageDuration)
-admin.site.register(ItemUsageRating)
+admin.site.register(ItemUsageDurationType)
+admin.site.register(ItemUsageRatingType)

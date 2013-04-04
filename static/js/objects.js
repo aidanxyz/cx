@@ -60,15 +60,21 @@ function VoteHandler($this) {  //"$this" is a clicked link
         var request = $.ajax({
             data: data_to_send,
             type: 'post',
-            url: '/feedbacks/' + feedback.attr('feedback-id') + '/vote/',
+            url: '/feedbacks/' + feedback.attr('id') + '/vote/',
             dataType: 'json'
         });
 
         request.done(function(data, textStatus, jqXHR) {
             affect_score(parseInt($this.attr('weight')));
             affect_count(1);
-            // change class of clicked link
             change_class_to('unvote');
+            // priority
+            if (parseInt($this.attr('weight')) > 0) {
+                add_set_priority();
+            }
+            else {
+                remove_set_priority();
+            }
         });
 
         request.fail(function(jqXHR, textStatus, errorThrown) {
@@ -80,7 +86,7 @@ function VoteHandler($this) {  //"$this" is a clicked link
         var request = $.ajax({
             data: {'vote_type': $this.attr('type-id')},
             type: 'post',
-            url: '/feedbacks/' + feedback.attr('feedback-id') + '/unvote/',
+            url: '/feedbacks/' + feedback.attr('id') + '/unvote/',
             dataType: 'json'
         });
         
@@ -88,6 +94,10 @@ function VoteHandler($this) {  //"$this" is a clicked link
             affect_score(-parseInt($this.attr('weight')));
             affect_count(-1);
             change_class_to('vote');
+            // priority
+            if (parseInt($this.attr('weight')) > 0) {
+                remove_set_priority();
+            }
         });
 
         request.fail(function(jqXHR, textStatus, errorThrown) {
@@ -105,10 +115,12 @@ function VoteHandler($this) {  //"$this" is a clicked link
 
     function affect_count(weight) {
         var count = $this.children('span#count');
-        count.text(parseInt(count.text()) + weight);
+        inc_text_value(count, weight);
+        //count.text(parseInt(count.text()) + weight);
         if (is_revote) {
             var prev_count = prev_vote.children('span#count');
-            prev_count.text(parseInt(prev_count.text()) - weight);
+            inc_text_value(prev_count, -weight);
+            //prev_count.text(parseInt(prev_count.text()) - weight);
         }
     }
 
@@ -124,6 +136,17 @@ function VoteHandler($this) {  //"$this" is a clicked link
             return 'unvote';
         else
             return 'vote';
+    }
+
+    function add_set_priority() {
+        var potential_priority = feedback.parents('div.span4').find('.unset_priority').length + 1 || 1; // patch hack
+        if (potential_priority < 4) {
+            feedback.children('#actions').append(ich.set_priority({value: potential_priority}))
+        }
+    }
+
+    function remove_set_priority () {
+        $this.siblings('.set_priority').text('');
     }
 
     return {
@@ -165,6 +188,107 @@ function get_similars(query, url, results_wrapper, ich_id, add_data) {
     });
 }
 
+function PriorityHandler (wrapper_sel) {
+    var max_set_priority = 0;
+    // find latest set priority value
+    $(wrapper_sel).find('.unset_priority').each(function(i) {
+        var priority_val = parseInt($(this).text());
+        if (priority_val > max_set_priority) {
+            max_set_priority = priority_val;
+        }
+    });
+    // console.log(wrapper_sel + ':' + max_set_priority);
+    // set values to set_priorities without values (rendered by server)
+    function affect_set_priority () {
+        if (parseInt(max_set_priority) < 3) {
+            // console.log('max_set_priority + 1: ' + parseInt(max_set_priority + 1));
+            // console.log('number of .set_priority: ' + $(wrapper_sel).find('.set_priority').length);
+            $(wrapper_sel).find('.set_priority').text(parseInt(max_set_priority) + 1);
+        }
+        else {
+            $(wrapper_sel).find('.set_priority').text('');
+        }
+    }
+    affect_set_priority();
+    // setting priority
+    $(wrapper_sel).on('click', '.set_priority', function () {
+        var clickable = $(this);
+
+        var feedback = clickable.parents('li');
+        
+        var request = $.ajax({
+            url: '/feedbacks/' + feedback.attr('id') + '/priority/set/',
+            data: {value: clickable.text()},
+            type: 'post',
+            dataType: 'json'
+        });
+
+        request.done(function(data, textStatus, jqXHR) {
+            // change class to unset_priority
+            clickable.attr('class', 'unset_priority');
+            max_set_priority = parseInt(clickable.text());
+            // increase values of .set_priority or remove them if priority-3 was clicked
+            affect_set_priority();
+            // increase priority stats counter
+            var stat_counter = feedback.children('#info').find('span.priority#' + clickable.text());
+            inc_text_value(stat_counter, 1);
+        })
+
+        request.fail(function(jqXHR, textStatus, errorThrown) {
+            console.log(jqXHR);
+            var error = "";
+            $.each($.parseJSON(jqXHR.responseText), function(key, value) {
+                error += value + " ";
+            });
+            alert(error);
+        });
+    });
+    // unsetting priority
+    $(wrapper_sel).on('click', '.unset_priority', function() {
+        var clickable = $(this);
+        var feedback = clickable.parents('li');
+
+        // is this latest set priority
+        if (parseInt(max_set_priority) !== parseInt(clickable.text())) {
+            alert('Unset priority #' + max_set_priority + ' first');
+            return false;
+        }
+        // request
+        var request = $.ajax({
+            url: '/feedbacks/' + feedback.attr('id') + '/priority/unset/',
+            data: {value: clickable.text()},
+            type: 'post',
+            dataType: 'json'
+        });
+
+        request.done(function(data, textStatus, jqXHR) {
+            // change class to set_priority
+            clickable.attr('class', 'set_priority');
+            // decrease potential priorities
+            max_set_priority = parseInt(clickable.text()) - 1;
+            affect_set_priority();
+            // decrease priority stats counter
+            var stat_counter = feedback.children('#info').find('span.priority#' + clickable.text());
+            inc_text_value(stat_counter, -1);
+        })
+
+        request.fail(function(jqXHR, textStatus, errorThrown) {
+            console.log(jqXHR);
+            var error = "";
+            $.each($.parseJSON(jqXHR.responseText), function(key, value) {
+                error += value + " ";
+            });
+            alert(error);
+        });
+    });
+    
+    return {max_set_priority: max_set_priority}
+}
+
+function inc_text_value (dom_obj, n) {
+    dom_obj.text(parseInt(dom_obj.text()) + n);
+}
+
 // object literal pattern
 var siteNameSpace = {
     common : {
@@ -182,13 +306,6 @@ var siteNameSpace = {
                 }
             }
         },
-        /* #idea 
-         * You say: new Feedback({vote: $(this)}), -it actually can be any structure with 
-         * any possible one-key object as arg, and it 
-         * gives you an object with everything related to Feedback such as votes, body, etc
-         * So, not HTML dictates JS (jquery), but JS builds HTML. Therefore it should have a function 
-         * 'build()' which returns an HTML of complete feedback with provided values
-         **/
     },
     mainpage: {
         init: function(){
@@ -198,9 +315,6 @@ var siteNameSpace = {
     review: {
         config: {
             is_authenticated: false,
-        },
-        selectors: {
-
         },
         init: function(config) {
             if (config && typeof config === 'object') {
@@ -220,10 +334,20 @@ var siteNameSpace = {
         },
         authenticated: {
             used: function() {
-                /**
-                 * searching for positive/negative similar feedbacks 
-                 * grabs data from HTML div data-simi
-                 */
+                // styling
+                $('div#pros, div#cons').on({
+                    mouseenter: function() {
+                        $(this).find('.set_priority').show();
+                    },
+                    mouseleave: function() {
+                        $(this).find('.set_priority').hide();
+                    }
+                }, 'li.well');
+                // handling priorities
+                var pros_priorities = PriorityHandler('div#pros');
+                var cons_priorities = PriorityHandler('div#cons');
+                // searching for positive/negative similar feedbacks 
+                // grabs data from HTML div data-simi
                 $('div[data-similars]').each(function(index) {
                     var options = $(this).data('similars');
                     var input = $(this).siblings('input[name=' + options.input_name + ']');
@@ -282,7 +406,7 @@ var siteNameSpace = {
                     var link = $(this);
                     feedback = link.parents('li');
                     var request = $.ajax({
-                        url: '/feedbacks/' + feedback.attr('feedback-id') + '/favorite/',
+                        url: '/feedbacks/' + feedback.attr('id') + '/favorite/',
                         type: 'post',
                         dataType: 'json'
                     });
@@ -297,15 +421,15 @@ var siteNameSpace = {
             not_used: function() {
                 // <I used it> click
                 $('button#used').click(function() {
-                    $('a#used').trigger('click');
-                    $(this).text('Saving...');
                     setTimeout(function() {
                         $('#not_used-modal').modal('hide');
-                    }, 1000);
+                    }, 2500);
                 });
 
                 $('form#usage_form').submit(function() {
                     var form = $(this);
+                    var forms = $('form#usage_form');
+
                     var request = $.ajax({
                         type: form.attr('method'),
                         url: form.attr('action'),
@@ -314,11 +438,13 @@ var siteNameSpace = {
                     });
 
                     request.done(function(data, textStatus, jqXHR) {
-                        form.after(ich.usage_info({
-                            duration: $('select#id_duration option:selected').text(),
-                            rating: $('select#id_rating option:selected').text()
+                        forms.after(ich.usage_info({
+                            duration: form.find('select#id_duration option:selected').text(),
+                            rating: form.find('select#id_rating option:selected').text()
                         }));
-                        form.remove();
+                        forms.remove();
+                        // close modal if it was modal form
+                        $('#not_used-modal').modal('hide');
                         // switch event handlers to allow voting etc.
                         $('.vote, .unvote, a#add_feedback').off('click');
                         siteNameSpace.review.authenticated.used();
@@ -345,8 +471,8 @@ var siteNameSpace = {
             // fetching similar items
             var MIN_MODEL_NAME = 1;
             var similars_wrapper = $('div[data-similars]');
-            var options = similars_wrapper.data('similars');
-            var input = similars_wrapper.siblings('input[name=' + options.input_name + ']');
+            var options = similars_$(wrapper_sel).data('similars');
+            var input = similars_$(wrapper_sel).siblings('input[name=' + options.input_name + ']');
             var thread = null;
             $(input).keyup(function(){
                 clearTimeout(thread);
@@ -356,7 +482,7 @@ var siteNameSpace = {
             });
         }
     },
-    detail_add: {
+    details: {
         init: function() {
             // adding detail
             $('form#detail').submit(function() {
@@ -379,6 +505,7 @@ var siteNameSpace = {
                 request.fail(function(jqXHR, textStatus, errorThrown) {
                     alert(jqXHR.responseText);
                 });
+
                 return false;
             });
         }

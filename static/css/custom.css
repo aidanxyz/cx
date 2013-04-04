@@ -1,3 +1,64 @@
+body {
+	background-color: white;
+}
+section#header, section#body {
+	background-color: #FCFCFC;
+}
+section#body {
+	margin-top: 20px;
+}
+section#header {
+	margin-top: 10px;
+}
+/*div[class^="span"] {
+	background-color: #FFFEED;
+}*/
+
 .unvote, .unfavorite {
 	font-weight: bold;
+}
+textarea#detail_body {
+	height: 70px;
+	width: 300px;
+}
+.unset_priority {
+	color: green;
+}
+.set_priority {
+	display: none;
+}
+#img_logo {
+	height: 23px;
+	width: 105px;
+}
+.navbar .brand {
+	padding: 10px 5px 2px 20px;
+}
+input#search_input {
+	height: 16px;
+}
+form.form-search {
+	float: left;
+	margin: 0;
+	padding: 5px 5px 5px 40px;
+}
+span#action-link, span#profile-link {
+	margin-left: 20px;
+}
+span#profile-link {
+	color: brown;
+}
+div.dropdown {
+	float: left;
+}
+div#top-actions {
+	padding-top: 10px;
+}
+.navbar-search {
+	margin: 5px 5px 5px 200px;
+}
+a.brand {
+	font-size: 18px;
+	font-family: sans-serif;
+	color: #700000;
 }

@@ -10,44 +10,52 @@
 </head>
 
 <body>
-	<div class="container">
-		<div class="row" id="top">
-			<div class="span3">
-			</div>
-			<div class="span5">
-			</div>
-			<div class="span4">
-				{% if user.is_authenticated %}
-					<a href="/customauth/logout">logout {{ user.full_name }}</a>
-				{% else %}
-					<a href="/customauth/login?next={{ request.path }}">login</a>
+	<div class="navbar navbar-static-top">
+		<div class="navbar-inner">
+			<div class="container">
+				<a class="brand" href="/items"><img src="{{ STATIC_URL }}/img/logo.png" id="img_logo"></a>
+				<ul class="nav">
+					<form class="navbar-search pull-left">
+						<input type="text" class="search-query" placeholder="Search">
+					</form>
+				</ul>
+				<ul class="nav pull-right">
+					<li>
+						<a href="/items/add">add new item</a>
+					</li>
+					<li class="divider-vertical"></li>
+					{% if user.is_authenticated %}
+					<li class="dropdown">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#">{{ user.full_name }} <b class="caret"></b></a>
+						<ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+							<li><a tabindex="-1" href="/users/{{ user.id }}"><i class="icon-user"></i> profile</a></li>
+							<li class="divider"></li>
+							<li><a tabindex="-1" href="/customauth/logout"><i class="icon-circle-arrow-right"></i> logout</a></li>
+						</ul>
+					</li>
+					{% else %}
+					<li>
+						<a id="top-link" href="/customauth/login?next={{ request.path }}">login</a>
+					</li>
 					{% include "customauth/login-modal.html" %}
-				{% endif %}
+					{% endif %}
+				</ul>
 			</div>
 		</div>
-		<div class="row" id="logo-stuff">
-			<div class="span3">
-				<p>The Super Logo</p>
+	</div>
+	<div class="container">
+		<section id="body">
+			<div class="row">
+				<div class="span9">
+					{% block content %}
+					{% endblock %}
+				</div>
+				<div class="span3">
+					Similar products
+					<hr>
+				</div>
 			</div>
-			<div class="span5">
-			    <form class="form-search">
-				    <input type="text" class="input-medium search-query">
-				    <button type="submit" class="btn">Search</button>
-			    </form>
-			</div>
-			<div class="span4">
-				<a href="/items/add">Add new item</a>
-			</div>
-		</div>
-		<div class="row" id="content">
-			<div class="span9">
-				{% block content %}
-				{% endblock %}
-			</div>
-			<div class="span3">
-				this is sidebar
-			</div>
-		</div>
+		</section>
 	</div>
 </body>
 </html>
