@@ -1,64 +1,62 @@
 body {
 	background-color: white;
-}
-section#header, section#body {
-	background-color: #FCFCFC;
-}
-section#body {
-	margin-top: 20px;
+/*	background-image: -moz-radial-gradient(rgb(255, 255, 255), rgb(247, 247, 247));
+	background-image: -webkit-gradient(radial, center center, 0, center center, 220, from(rgb(255, 255, 255)), to(rgb(247, 247, 247)));
+	background-image: -webkit-radial-gradient(rgb(255, 255, 255), rgb(247, 247, 247));
+	background-image: radial-gradient(rgb(255, 255, 255), rgb(247, 247, 247));*/
 }
 section#header {
-	margin-top: 10px;
+	padding: 0 0 5px 0;
+	margin: 0 0 5px 0;
+	min-height: 70px;
+	padding-top: 15px;
+	border-bottom: 1px solid rgb(247, 247, 247);
+	/*background-image:-webkit-gradient(linear, left bottom, left top, color-stop(0.32, rgb(255, 255, 255)), color-stop(0.66, rgb(255, 255, 255)), color-stop(0.83, rgb(253, 253, 253)));
+	background-image: -webkit-linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255), rgb(253, 253, 253));
+	background-image: -moz-linear-gradient(top,rgb(255, 255, 255), rgb(255, 255, 255), rgb(253, 253, 253));
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='rgb(255, 255, 255)', endColorstr='rgb(255, 255, 253)');
+	-ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr='rgb(255, 255, 255)', endColorstr='rgb(255, 255, 253)')";
+	background-image: -ms-linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255), rgb(253, 253, 253));
+	background-image: -o-linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255), rgb(253, 253, 253));
+	background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255), rgb(253, 253, 253));*/
 }
-/*div[class^="span"] {
-	background-color: #FFFEED;
-}*/
-
-.unvote, .unfavorite {
-	font-weight: bold;
+div#top-search, div#top-actions {
+	margin-top: 18px;
 }
-textarea#detail_body {
-	height: 70px;
-	width: 300px;
+div#top-logo {
+	padding-top: 3px;
 }
-.unset_priority {
-	color: green;
+a#top-logo {
+	font-family: 'Dancing Script';
+	font-size: 40px;
+	color: black;
 }
-.set_priority {
-	display: none;
+a#top-logo:hover {
+	text-decoration: none;
 }
-#img_logo {
-	height: 23px;
-	width: 105px;
+a#top-logo span {
+	color: rgb(248, 84, 6);
 }
-.navbar .brand {
-	padding: 10px 5px 2px 20px;
+img#img_logo {
+	width: 90%
+}
+section#body {
+	padding: 15px 0 0 0;
 }
 input#search_input {
-	height: 16px;
+	width: 250px;
 }
 form.form-search {
 	float: left;
 	margin: 0;
-	padding: 5px 5px 5px 40px;
+	padding: 0;
 }
-span#action-link, span#profile-link {
-	margin-left: 20px;
-}
-span#profile-link {
-	color: brown;
-}
-div.dropdown {
-	float: left;
-}
-div#top-actions {
-	padding-top: 10px;
-}
-.navbar-search {
-	margin: 5px 5px 5px 200px;
-}
-a.brand {
+/*a.brand {
 	font-size: 18px;
 	font-family: sans-serif;
 	color: #700000;
+}*/
+div#action_login {
+	float: right;
+	padding-top: 3px;
 }

@@ -22,6 +22,10 @@ class Item(models.Model):
 		('NA', 'Not active')
 	)
 	status = models.CharField(max_length=2, choices=STATUS_CHOICES, default='NC')
+	latest_feedback = models.ForeignKey('reviews.Feedback', related_name="items_latest_set", null=True)
+	views_count = models.PositiveIntegerField(default=0)
+	pros_count = models.PositiveIntegerField(default=0)
+	cons_count = models.PositiveIntegerField(default=0)
 	
 	def __unicode__(self):
 		return self.name

@@ -106,7 +106,7 @@ function VoteHandler($this) {  //"$this" is a clicked link
     }
 
     function affect_score(weight) {
-        var score = feedback.children('span#score');
+        var score = feedback.children('div#feedback_body').children('#score');
         score.text(parseInt(score.text()) + weight);
         if (is_revote) {
             score.text(parseInt(score.text()) - parseInt(prev_vote.attr('weight')));
@@ -114,39 +114,47 @@ function VoteHandler($this) {  //"$this" is a clicked link
     }
 
     function affect_count(weight) {
-        var count = $this.children('span#count');
-        inc_text_value(count, weight);
-        //count.text(parseInt(count.text()) + weight);
+        var count = get_count_obj($this.attr('type-id'));
+        count.text(parseInt(count.text()) + weight);
         if (is_revote) {
-            var prev_count = prev_vote.children('span#count');
-            inc_text_value(prev_count, -weight);
-            //prev_count.text(parseInt(prev_count.text()) - weight);
+            var prev_count = get_count_obj(prev_vote.attr('type-id'));
+            prev_count.text(parseInt(prev_count.text()) - weight);
+        }
+    }
+
+    function get_count_obj (type_id) {
+        if (type_id == '1') {
+            return feedback.children('div#stats').children('span#agrees_count');
+        }
+        else if (type_id == '2') {
+            return feedback.children('div#stats').children('span#disagrees_count');
         }
     }
 
     function change_class_to(new_class) {
-        $this.attr('class', opposite(opposite(new_class)));
-        if (is_revote) {
-            prev_vote.attr('class', opposite(new_class));
+        if (new_class == 'unvote') {
+            $this.removeClass('vote');
+            $this.addClass('unvote active');
+            if (is_revote) {
+                prev_vote.removeClass('unvote active');
+                prev_vote.addClass('vote');
+            }
+        }
+        else if (new_class == 'vote') {
+            $this.removeClass('unvote active');
+            $this.addClass('vote');
         }
     }
 
-    function opposite(state) {
-        if (state == 'vote') 
-            return 'unvote';
-        else
-            return 'vote';
-    }
-
     function add_set_priority() {
-        var potential_priority = feedback.parents('div.span4').find('.unset_priority').length + 1 || 1; // patch hack
+        var potential_priority = feedback.parents('div.feedback_column').find('.unset_priority').length + 1 || 1; // patch hack
         if (potential_priority < 4) {
             feedback.children('#actions').append(ich.set_priority({value: potential_priority}))
         }
     }
 
     function remove_set_priority () {
-        $this.siblings('.set_priority').text('');
+        $this.siblings('.set_priority').text('').hide();
     }
 
     return {
@@ -192,7 +200,7 @@ function PriorityHandler (wrapper_sel) {
     var max_set_priority = 0;
     // find latest set priority value
     $(wrapper_sel).find('.unset_priority').each(function(i) {
-        var priority_val = parseInt($(this).text());
+        var priority_val = parseInt($(this).text().substring(1)); // ex.: '#2'.substring(1) = '2'
         if (priority_val > max_set_priority) {
             max_set_priority = priority_val;
         }
@@ -203,10 +211,10 @@ function PriorityHandler (wrapper_sel) {
         if (parseInt(max_set_priority) < 3) {
             // console.log('max_set_priority + 1: ' + parseInt(max_set_priority + 1));
             // console.log('number of .set_priority: ' + $(wrapper_sel).find('.set_priority').length);
-            $(wrapper_sel).find('.set_priority').text(parseInt(max_set_priority) + 1);
+            $(wrapper_sel).find('.set_priority').text('#' + (max_set_priority + 1)).show();
         }
         else {
-            $(wrapper_sel).find('.set_priority').text('');
+            $(wrapper_sel).find('.set_priority').text('').hide();
         }
     }
     affect_set_priority();
@@ -218,19 +226,20 @@ function PriorityHandler (wrapper_sel) {
         
         var request = $.ajax({
             url: '/feedbacks/' + feedback.attr('id') + '/priority/set/',
-            data: {value: clickable.text()},
+            data: {value: clickable.text().substring(1)},
             type: 'post',
             dataType: 'json'
         });
 
         request.done(function(data, textStatus, jqXHR) {
             // change class to unset_priority
-            clickable.attr('class', 'unset_priority');
-            max_set_priority = parseInt(clickable.text());
+            clickable.removeClass('set_priority');
+            clickable.addClass('unset_priority active');
+            max_set_priority = parseInt(clickable.text().substring(1)); // this comes before affecting sets
             // increase values of .set_priority or remove them if priority-3 was clicked
             affect_set_priority();
             // increase priority stats counter
-            var stat_counter = feedback.children('#info').find('span.priority#' + clickable.text());
+            var stat_counter = feedback.children('div#stats').find('span.priority#' + clickable.text().substring(1));
             inc_text_value(stat_counter, 1);
         })
 
@@ -247,28 +256,30 @@ function PriorityHandler (wrapper_sel) {
     $(wrapper_sel).on('click', '.unset_priority', function() {
         var clickable = $(this);
         var feedback = clickable.parents('li');
+        var clicked_priority_val = clickable.text().substring(1);
 
         // is this latest set priority
-        if (parseInt(max_set_priority) !== parseInt(clickable.text())) {
+        if (parseInt(max_set_priority) !== parseInt(clicked_priority_val)) {
             alert('Unset priority #' + max_set_priority + ' first');
             return false;
         }
         // request
         var request = $.ajax({
             url: '/feedbacks/' + feedback.attr('id') + '/priority/unset/',
-            data: {value: clickable.text()},
+            data: {value: clicked_priority_val},
             type: 'post',
             dataType: 'json'
         });
 
         request.done(function(data, textStatus, jqXHR) {
             // change class to set_priority
-            clickable.attr('class', 'set_priority');
+            clickable.removeClass('unset_priority active');
+            clickable.addClass('set_priority');
             // decrease potential priorities
-            max_set_priority = parseInt(clickable.text()) - 1;
+            max_set_priority = parseInt(clicked_priority_val) - 1;
             affect_set_priority();
             // decrease priority stats counter
-            var stat_counter = feedback.children('#info').find('span.priority#' + clickable.text());
+            var stat_counter = feedback.children('div#stats').find('span.priority#' + clicked_priority_val);
             inc_text_value(stat_counter, -1);
         })
 
@@ -328,8 +339,9 @@ var siteNameSpace = {
             }
         },
         guest: function() {
-            $('.vote, .unvote, a#add_feedback, a#used').click(function() {
+            $('.vote, .unvote, a#add_feedback, a#used, #usage_submit').click(function() {
                 $('#login-modal').modal();
+                return false;
             });
         },
         authenticated: {
@@ -342,7 +354,7 @@ var siteNameSpace = {
                     mouseleave: function() {
                         $(this).find('.set_priority').hide();
                     }
-                }, 'li.well');
+                }, 'li.feedback');
                 // handling priorities
                 var pros_priorities = PriorityHandler('div#pros');
                 var cons_priorities = PriorityHandler('div#cons');
@@ -471,8 +483,8 @@ var siteNameSpace = {
             // fetching similar items
             var MIN_MODEL_NAME = 1;
             var similars_wrapper = $('div[data-similars]');
-            var options = similars_$(wrapper_sel).data('similars');
-            var input = similars_$(wrapper_sel).siblings('input[name=' + options.input_name + ']');
+            var options = similars_wrapper.data('similars');
+            var input = similars_wrapper.siblings('input[name=' + options.input_name + ']');
             var thread = null;
             $(input).keyup(function(){
                 clearTimeout(thread);

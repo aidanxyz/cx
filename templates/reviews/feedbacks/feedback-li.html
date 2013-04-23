@@ -1,32 +1,35 @@
 <!-- Feedback body -->
-<li class="well feedback" id='{{ feedback.id }}'>
-	<span id="score">{{ feedback.score }}</span>
-	{{ feedback.body }}
-	<p id="actions">
+<li class="feedback" id='{{ feedback.id }}'>
+	<div id="feedback_body">
+		<div id="score">{{ feedback.score }}</div>
+		{{ feedback.body }}	
+	</div>
+	<div id="actions">
 		{% if feedback.voted_type_id == 1 %}
-			<a class="unvote" type-id="1" weight="1" href="javascript:void(0);">Agree(<span id='count'>{{ feedback.agrees_count }}</span>) </a>
+			<button class="unvote btn btn-mini active" type-id="1" weight="1">Agree</button>
 		{% else %}
-			<a class="vote" type-id="1" weight="1" href="javascript:void(0);">Agree(<span id='count'>{{ feedback.agrees_count }}</span>) </a>
+			<button class="vote btn btn-mini" type-id="1" weight="1">Agree</button>
 		{% endif %}
 
 		{% if feedback.voted_type_id == 2 %}
-			<a class="unvote" type-id="2" weight="-1" href="javascript:void(0);">Disagree(<span id='count'>{{ feedback.disagrees_count }}</span>)</a>
+			<button class="unvote btn btn-mini active" type-id="2" weight="-1">Disagree</button>
 		{% else %}
-			<a class="vote" type-id="2" weight="-1" href="javascript:void(0);">Disagree(<span id='count'>{{ feedback.disagrees_count }}</span>)</a>
+			<button class="vote btn btn-mini" type-id="2" weight="-1">Disagree</button>
 		{% endif %}
 
 		{% if feedback.priority_value %}
-			<a href="javascript:void(0);" class="unset_priority">{{ feedback.priority_value }}</a>
+			<button class="unset_priority btn btn-mini active">#{{ feedback.priority_value }}</button>
 		{% elif feedback.voted_type_id == 1 %}
-			<a href="javascript:void(0);" class="set_priority"></a>
+			<button class="set_priority btn btn-mini"></button>
 		{% endif %}
-	</p>
-	<div id="info">
-		<p id="priorities">
-			priority stats: 1: <span class="priority" id="1">{{ feedback.priority_1_count }}</span>, 2: <span class="priority" id="2">{{ feedback.priority_2_count }}</span>, 3: <span class="priority" id="3">{{ feedback.priority_3_count }}</span>
-		</p>
-		<p id="details">
-			<a href="/feedbacks/{{ feedback.id }}/details">Details(<span id="count">{{ feedback.details_count }}</span>)</a>
-		</p>
+	</div>
+	<div id="stats">
+		<span id='agrees_count'>{{ feedback.agrees_count }}</span> Agrees
+		<span id='disagrees_count'>{{ feedback.disagrees_count }}</span> Disagrees
+		Priorities: 
+		1-<span class="priority" id="1">{{ feedback.priority_1_count }}</span>
+		2-<span class="priority" id="2">{{ feedback.priority_2_count }}</span>
+		3-<span class="priority" id="3">{{ feedback.priority_3_count }}</span>
+		<a id="details_link" href="/feedbacks/{{ feedback.id }}/details">Details(<span id="count">{{ feedback.details_count }}</span>)</a>
 	</div>
 </li>

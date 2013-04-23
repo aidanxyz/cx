@@ -7,52 +7,50 @@
 	<script type="text/javascript" src="{{ STATIC_URL }}/js/objects.js"></script>
 	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/bootstrap.min.css">
 	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/custom.css">
+	<!-- <link href='http://fonts.googleapis.com/css?family=Courgette|Maven+Pro|Dancing+Script' rel='stylesheet' type='text/css'> -->
 </head>
 
 <body>
-	<div class="navbar navbar-static-top">
-		<div class="navbar-inner">
-			<div class="container">
-				<a class="brand" href="/items"><img src="{{ STATIC_URL }}/img/logo.png" id="img_logo"></a>
-				<ul class="nav">
-					<form class="navbar-search pull-left">
-						<input type="text" class="search-query" placeholder="Search">
-					</form>
-				</ul>
-				<ul class="nav pull-right">
-					<li>
-						<a href="/items/add">add new item</a>
-					</li>
-					<li class="divider-vertical"></li>
-					{% if user.is_authenticated %}
-					<li class="dropdown">
-						<a class="dropdown-toggle" data-toggle="dropdown" href="#">{{ user.full_name }} <b class="caret"></b></a>
-						<ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-							<li><a tabindex="-1" href="/users/{{ user.id }}"><i class="icon-user"></i> profile</a></li>
-							<li class="divider"></li>
-							<li><a tabindex="-1" href="/customauth/logout"><i class="icon-circle-arrow-right"></i> logout</a></li>
-						</ul>
-					</li>
-					{% else %}
-					<li>
-						<a id="top-link" href="/customauth/login?next={{ request.path }}">login</a>
-					</li>
-					{% include "customauth/login-modal.html" %}
-					{% endif %}
-				</ul>
-			</div>
-		</div>
-	</div>
 	<div class="container">
+		<section id="header">
+			<div class="row">
+				<div class="span3" id="top-logo">
+					<a href="/items" id="top-logo">
+						<img src="{{ STATIC_URL }}/img/logo13.png" id="img_logo">
+					</a>
+				</div>
+				<div class="span5" id="top-search">
+					<form class="form-search">
+				    	<div class="input-append">
+						    <input type="text" class="input-medium search-query" id="search_input" placeholder="search for items here">
+						    <button type="submit" class="btn"> <i class="icon-search"> </i></button>
+						</div>
+				    </form>
+				</div>
+				<div class="span4" id="top-actions">
+					<div id="action_login">
+						{% if user.is_authenticated %}
+						<div class="dropdown" id="username">
+							<a class="dropdown-toggle" data-toggle="dropdown" href="#">{{ user.full_name }}</a>
+							<ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+								<li><a tabindex="-1" href="/users/{{ user.id }}"><i class="icon-user"></i> profile</a></li>
+								<li class="divider"></li>
+								<li><a tabindex="-1" href="/customauth/logout"><i class="icon-circle-arrow-right"></i> logout</a></li>
+							</ul>
+						</div>
+						{% else %}
+						<a href="/customauth/login?next={{ request.path }}">login</a>
+						{% include "customauth/login-modal.html" %}
+						{% endif %}
+					</div>
+				</div>
+			</div>
+		</section>
 		<section id="body">
 			<div class="row">
-				<div class="span9">
+				<div class="span12">
 					{% block content %}
 					{% endblock %}
-				</div>
-				<div class="span3">
-					Similar products
-					<hr>
 				</div>
 			</div>
 		</section>

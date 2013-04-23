@@ -14,12 +14,14 @@ from django.conf import settings
 import MySQLdb
 import json
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import F, Q
 
 def index(request):
-	latest_item_list = Item.objects.all().order_by('-date_created')
+	latest_items_list = Item.objects.filter(Q(status='C') | Q(status='NC')).prefetch_related('latest_feedback')
+
 	t = loader.get_template('items/index.html')
 	rc = RequestContext(request, {
-		'latest_item_list': latest_item_list,
+		'latest_item_list': latest_items_list,
 	})
 	return HttpResponse(t.render(rc))
 
@@ -70,6 +72,8 @@ def view(request, item_id):
 		item = Item.objects.get(pk=item_id)
 	except Item.DoesNotExist:
 		raise Http404
+	else:
+		Item.objects.filter(pk=item_id).update(views_count = F('views_count') + 1)
 
 	experience = None
 	add_select = {}

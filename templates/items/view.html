@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 	<div class="row">
-		<div class="span9">
-			<div id="item_info" item-id="{{ item.id }}">
-				<h1 id="item_name">{{ item.name }}</h1>
+		<div class="span12">
+			<div id="item" item-id="{{ item.id }}">
+				<div id="item_name">{{ item.name }}</div>
 				{% if experience %}
 					<span id="usage_info" class="muted">
 						You used this {{ item.category }} for <a>{{ experience.duration }}</a> and rated as <a>{{ experience.rating }}</a>
@@ -14,63 +14,76 @@
 					{% include "items/not_used-modal.html" %}
 				{% endif %}
 			</div>
+			<hr>
 		</div>
 	</div>
 	<div class="row">
-		<div class="span1"></div>
-		<div class="span4" id="pros">
-			<h3>What I like:</h3>
-			<ul>
-				{% for feedback in feedbacks %}
-					{% if feedback.is_positive %}
-						{% include "reviews/feedbacks/feedback-li.html" %}
+		<div class="span10">
+			<div id="proscons_wrapper">
+				<div class="feedback_column" id="pros">
+					<div id="pros_label">
+						What I like:
+					</div>
+					<ul id="feedbacks">
+						{% for feedback in feedbacks %}
+							{% if feedback.is_positive %}
+								{% include "reviews/feedbacks/feedback-li.html" %}
+							{% endif %}
+						{% endfor %}
+					</ul>
+					{% if user.is_authenticated and experience %}
+						{% include "reviews/feedbacks/add.html" with is_positive=1 %}
+					{% else %}
+						<a href="javascript:void(0);" id="add_feedback">Add feedback</a>
+						{% include "reviews/feedbacks/add.html" with is_positive=1 hidden=True%}
 					{% endif %}
-				{% endfor %}
-			</ul>
-			{% if user.is_authenticated and experience %}
-				{% include "reviews/feedbacks/add.html" with is_positive=1 %}
-			{% else %}
-				<a href="javascript:void(0);" id="add_feedback">Add feedback</a>
-				{% include "reviews/feedbacks/add.html" with is_positive=1 hidden=True%}
-			{% endif %}
-		</div>
-		<div class="span4" id="cons">
-			<h3>What I don't like:</h3>
-			<ul>
-				{% for feedback in feedbacks %}
-					{% if not feedback.is_positive %}
-						{% include "reviews/feedbacks/feedback-li.html" %}
+				</div>
+				<div class="feedback_column" id="cons">
+					<div id="cons_label">
+						What I don't like:
+					</div>
+					<ul id="feedbacks">
+						{% for feedback in feedbacks %}
+							{% if not feedback.is_positive %}
+								{% include "reviews/feedbacks/feedback-li.html" %}
+							{% endif %}
+						{% endfor %}
+					</ul>
+					{% if user.is_authenticated and experience %}
+						{% include "reviews/feedbacks/add.html" with is_positive=0 %}
+					{% else %}
+						<a href="javascript:void(0);" id="add_feedback">Add feedback</a>
+						{% include "reviews/feedbacks/add.html" with is_positive=0 hidden=True%}
 					{% endif %}
-				{% endfor %}
-			</ul>
-			{% if user.is_authenticated and experience %}
-				{% include "reviews/feedbacks/add.html" with is_positive=0 %}
-			{% else %}
-				<a href="javascript:void(0);" id="add_feedback">Add feedback</a>
-				{% include "reviews/feedbacks/add.html" with is_positive=0 hidden=True%}
-			{% endif %}
+				</div>
+			</div>
 		</div>
+		<div class="span2">Hey yo</div>
 	</div>
 	<!-- ICanHaz templates -->
 	<script type="text/html" id="feedback">
-		<li class="well" feedback-id='{% verbatim %}{{ id }}{% endverbatim %}'>
-			<span id="score">0</span>
-			{% verbatim %}
-			{{ body }}
-			{% endverbatim %}
-			<p id="actions">
-				<a class="vote" type-id="1" weight="1" href="javascript:void(0);">Agree(<span id='count'>0</span>) </a>
-				<a class="vote" type-id="2" weight="-1" href="javascript:void(0);">Disagree(<span id='count'>0</span>)</a>
-			</p>
-			<div id="info">
-				<p id="priorities">
-					priorities: 1: <span class="priority" id="1">0</span>, 2: <span class="priority" id="2">0</span>, 3: <span class="priority" id="3">0</span>
-				</p>
-				<p id="details">
-					<a href="/feedbacks/{% verbatim %}{{ id }}{% endverbatim %}/details">Details(<span id="count">0</span>)</a>
-				</p>
+		<li class="feedback" id='{% verbatim %}{{ id }}{% endverbatim %}'>
+			<div id="feedback_body">
+				<div id="score">0</div>
+				{% verbatim %}
+				{{ body }}
+				{% endverbatim %}
+			</div>
+			<div id="actions">
+				<button class="vote btn btn-mini" type-id="1" weight="1">Agree</button>
+				<button class="vote btn btn-mini" type-id="2" weight="-1">Disagree</button>
+			</div>
+			<div id="stats">
+				<span id='agrees_count'>0</span> Agrees
+				<span id='disagrees_count'>0</span> Disagrees
+				Priorities: 
+				1-<span class="priority" id="1">0</span>
+				2-<span class="priority" id="2">0</span>
+				3-<span class="priority" id="3">0</span>
+				<a id="details_link" href="/feedbacks/{{ feedback.id }}/details">Details(<span id="count">0</span>)</a>
 			</div>
 		</li>
+		<hr>
 	</script>
 	<script type="text/html" id="usage_info">
 		<span id="usage_info" class="muted">
@@ -90,7 +103,7 @@
 	</script>
 	<script type="text/html" id="set_priority">
 		{% verbatim %}
-		<a href="javascript:void(0);" class="set_priority">{{ value }}</a>
+		<button href="javascript:void(0);" class="set_priority">#{{ value }}</button>
 		{% endverbatim %}
 	</script>
 	<!-- JavaScript -->
@@ -107,4 +120,5 @@
 			{% endif %}
 		});
 	</script>
+	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/review.css">
 {% endblock %}

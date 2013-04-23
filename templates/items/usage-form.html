@@ -1,5 +1,5 @@
 <form id="usage_form" method="post" action="/items/{{ item.id }}/usage/add/">
 	{% csrf_token %}
 	<span id="usage_sentence">I used this {{ item.category }} for {{ usage_form.duration }} and rate it as {{ usage_form.rating }}</span>
-	<button type="submit" class="btn">Submit <i class="icon-ok-sign"></i></button>
+	<button type="submit" class="btn" id="usage_submit">Submit <i class="icon-ok-sign"></i></button>
 </form>
