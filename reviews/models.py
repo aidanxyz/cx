@@ -49,16 +49,33 @@ class Feedback(models.Model):
 		return self.body
 
 @receiver(post_save, sender=Feedback)
-def feedback_sphinx_save(sender, instance, created, **kwargs):
+def feedback_post_save(sender, instance, created, **kwargs):
 	if created:
+		#	Sphinx
 		q = "insert into reviews_feedback values({0}, '{1}', {2}, {3}, {4})".format(instance.id, instance.body, instance.created_by_id, int(instance.is_positive), int(instance.item_id))
 		rows_affected = sphinxql_query(q)
 		assert rows_affected > 0
+		#	update Item info: latest feedback link and pros/cons count
+		if instance.is_positive:
+			Item.objects.filter(id=instance.item_id).update(latest_feedback=instance, pros_count=F('pros_count') + 1)
+		else:
+			Item.objects.filter(id=instance.item_id).update(latest_feedback=instance, cons_count=F('cons_count') + 1)
 
 @receiver(pre_delete, sender=Feedback)
-def feedback_sphinx_delete(sender, instance, **kwargs):
+def feedback_pre_delete(sender, instance, **kwargs):
+	#	Sphinx
 	q = "delete from reviews_feedback where id={0}".format(instance.id)
 	sphinxql_query(q)
+	#	Item info
+		#	latest feedback link
+	item = Item.objects.get(pk=instance.item_id)
+	if item.latest_feedback_id == instance.id:
+		Item.objects.filter(id=instance.item_id).update(latest_feedback=None)
+		#	pros/cons count
+	if instance.is_positive:
+		Item.objects.filter(id=instance.item_id).update(pros_count=F('pros_count') - 1)
+	else:
+		Item.objects.filter(id=instance.item_id).update(cons_count=F('cons_count') - 1)
 
 class ModerationReason(models.Model):
 	reason = models.CharField(max_length=200, unique=True)

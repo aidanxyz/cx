@@ -1,19 +1,46 @@
 {% extends "base.html" %}
 {% block content %}
-	<div class="span2">
-		{% block sidebar %}
-			<p>categories</p>
-		{% endblock %}
+	<div class="row">
+		<div class="span2" id="left_sidebar">
+			{% include "items/categories.html" %}
+		</div>
+		<div class="span8">
+			{% if latest_item_list %}
+				<ul id="items">
+					{% for item in latest_item_list %}
+						<li id="item">
+							<div id="item">
+								<div id="item_info">
+									<div id="item_name">
+										<a href="/items/{{ item.id }}" id="item_name">{{ item.name }}</a>
+									</div>
+									<div id="item_stats">
+										<span id="pros_count">{{ item.pros_count }}</span><span id="cons_count">{{ item.cons_count }}</span>
+										<span id="views_count">{{ item.views_count }} views</span>
+									</div>
+								</div>
+								<div id="image_thumbnail">
+									<a href=""><img src="{{ STATIC_URL }}/img/50x50.png"></a>
+								</div>
+							</div>
+							{% if item.latest_feedback %}
+							<div class="latest_feedback" id={% if item.latest_feedback.is_positive %}"pro"{% else %}"con"{% endif %}>
+								<div id="latest_feedback_body">
+									<a id="latest_feedback" href="/items/{{item.id}}/#{{item.latest_feedback.id}}">“{{ item.latest_feedback.body }}”</a>
+								</div>
+								<div id="feedback_stats">
+
+								</div>
+							</div>
+							{% endif %}
+						</li>
+					{% endfor %}
+				</ul>
+			{% else %}
+				<p>No items are available</p>
+			{% endif %}
+		</div>
+		<div class="span2"></div>
 	</div>
-	<div class="span6">
-		{% if latest_item_list %}
-			<ul>
-				{% for item in latest_item_list %}
-					<li><a href="/items/{{ item.id }}">{{ item.name }}</a></li>
-				{% endfor %}
-			</ul>
-		{% else %}
-			<p>No items are available</p>
-		{% endif %}
-	</div>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/index.css">
 {% endblock %}
