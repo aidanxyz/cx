@@ -1,4 +1,5 @@
 from django.conf.urls import patterns, include, url
+from django.conf import settings
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
@@ -24,3 +25,9 @@ urlpatterns = patterns('',
     url(r'^feedbacks/(?P<feedback_id>\d+)/priority/unset/$', 'reviews.views.unset_priority'), # /feedbacks/4556/priority/unset
     url(r'^feedbacks/search/$', 'reviews.views.search_feedback')
 )
+
+if settings.DEBUG:
+    # static files (images, css, javascript, etc.)
+    urlpatterns += patterns('',
+        (r'^media/(?P<path>.*)$', 'django.views.static.serve', {
+        'document_root': settings.MEDIA_ROOT}))

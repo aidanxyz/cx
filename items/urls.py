@@ -6,6 +6,8 @@ urlpatterns = patterns('items.views',
 	url(r'^(?P<item_id>\d+)/usage/add/$', 'add_usage_experience'), # items/25/used
 	url(r'^add/', 'add'),
 	url(r'^search/', 'search'),
+	url(r'^(?P<item_id>\d+)/gallery/$', 'view_item_images'),
+	url(r'^(?P<item_id>\d+)/gallery/add/$', 'add_item_image'),
 )
 
 urlpatterns += patterns('reviews.views', 

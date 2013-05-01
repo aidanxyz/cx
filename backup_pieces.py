@@ -1,0 +1,6 @@
+# 'num_agrees': 'select count(*) from reviews_vote where reviews_vote.type_id = 1 and reviews_vote.feedback_id = reviews_feedback.id',
+		# 'num_disagrees': 'select count(*) from reviews_vote where reviews_vote.type_id = 2 and reviews_vote.feedback_id = reviews_feedback.id',
+		# 'num_details': 'select count(*) from reviews_detail where reviews_detail.feedback_id = reviews_feedback.id',
+		# 'num_priority_1': 'select count(*) from reviews_priority where reviews_priority.feedback_id = reviews_feedback.id and reviews_priority.value = 1',
+		# 'num_priority_2': 'select count(*) from reviews_priority where reviews_priority.feedback_id = reviews_feedback.id and reviews_priority.value = 2',
+		# 'num_priority_3': 'select count(*) from reviews_priority where reviews_priority.feedback_id = reviews_feedback.id and reviews_priority.value = 3',

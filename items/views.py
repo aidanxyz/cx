@@ -8,7 +8,7 @@ from customauth.decorators import login_required_ajax
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from customauth.models import CustomUser
-from items.models import ItemUsageExperience, ItemUsageForm, ItemUsageDurationType, ItemUsageRatingType
+from items.models import ItemUsageExperience, ItemUsageForm, ItemUsageDurationType, ItemUsageRatingType, ItemImage, ItemImageUploadForm
 from django.core import serializers
 from django.conf import settings
 import MySQLdb
@@ -118,3 +118,37 @@ def add_usage_experience(request, item_id):
 	return HttpResponse(json.dumps({
 		'date_verified': experience.date_verified
 	}, cls=DjangoJSONEncoder))
+
+@login_required
+def add_item_image(request, item_id):
+	if request.method == 'POST':
+		form = ItemImageUploadForm(request.POST, request.FILES)
+		if form.is_valid() and form.clean_image_size():
+			item_image = ItemImage(
+				item=Item(id=item_id),
+				image=request.FILES['image'])
+			item_image.save()
+			return HttpResponseRedirect('/items/' + item_id + '/gallery/')
+	else:
+		form = ItemImageUploadForm()
+
+	return render(request, 'items/item_images/add.html', {
+		'form': form, 
+		'item_id': item_id,
+	})
+
+def view_item_images(request, item_id):
+	if request.method == 'GET':
+		try:
+			item = Item.objects.get(pk=item_id)
+		except Item.DoesNotExist:
+			return Http404()
+
+		item_images = ItemImage.objects.filter(item_id=item_id)
+
+		return render(request, 'items/item_images/view.html', {
+			'item': item,
+			'item_images': item_images,
+		})
+	else:
+		return HttpResponseBadRequest()
