@@ -2,14 +2,14 @@
 <div id="not_used-modal" class="modal hide fade">
 	<div class="modal-header">
 		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-		<h3>Verification</h3>
+		<center><h3>Verification</h3></center>
 	</div>
 	<div class="modal-body">
 		<h4 class="text-warning">In order to perform actions you need to assure that you used this item</h4>
 		<form id="usage_form" method="post" action="/items/{{ item.id }}/usage/add/">
 			{% csrf_token %}
-			<span id="usage_sentence">I used this {{ item.category }} for {{ usage_form.duration }} and rate it as {{ usage_form.rating }}</span>
-			<button type="submit" class="btn">Submit <i class="icon-ok-sign"></i></button>
+			I used <span style="font-style: italic;">{{ item.name }}</span> for {{ usage_form.duration }} and rate it as {{ usage_form.rating }}
+			<button type="submit" class="btn" style="margin: -10px 0 0 10px;">Submit <i class="icon-ok-sign"></i></button>
 		</form>
 	</div>
 	<div class="modal-footer">

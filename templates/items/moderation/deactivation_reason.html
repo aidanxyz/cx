@@ -1,0 +1,23 @@
+<div id="not_used-modal" class="modal hide fade">
+	<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+		<h4>Specify why you want to deactivate {{ item.name }}: </h4>
+	</div>
+	<div class="modal-body">
+		<form method="post" action="/items/{{ item.id }}/deactivate/">
+			{% csrf_token %}
+			<ul>
+				{% for reason in reasons %}
+					<li>
+						<input type="radio" name="reason" value="{{ reason.id }}"> {{ reason.reason }}
+					</li>
+				{% endfor %}
+			</ul>
+			<input type="text" name="other_reason">
+			<input type="submit">
+		</form>
+	</div>
+	<div class="modal-footer">
+		<a href="#" class="btn" data-dismiss="modal">Cancel</a>
+	</div>
+</div>

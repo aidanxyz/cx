@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+	<div class="span10">
+		<form action="/customauth/register/" method="post">
+			{% csrf_token %}
+			<fieldset>
+			    {% for field in form %}
+			    	{% if field.label != 'Password' %}
+				    	{{ field.label_tag }}
+			            {{ field.errors }}
+			            {{ field }}
+		            {% endif %}
+			    {% endfor %}
+			    
+			    <label for="id_password">Password</label>
+	        	{{ form.password.errors }}   
+	            <input id="id_password" name="password" type="password" />
+			    <br>
+			    <button type="submit" class="btn">Register</button>
+		    </fieldset>
+		</form>
+	</div>
+	<div class="span2"></div>
+</div>
+{% endblock %}

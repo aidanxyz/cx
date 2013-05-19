@@ -1,51 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
 	<script type="text/javascript" src="{{ STATIC_URL }}/js/jquery-1.8.3.min.js"></script>
 	<script type="text/javascript" src="{{ STATIC_URL }}/js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="{{ STATIC_URL }}/js/ICanHaz.min.js"></script>
 	<script type="text/javascript" src="{{ STATIC_URL }}/js/objects.js"></script>
+	<script type="text/javascript" src="{{ STATIC_URL }}/js/django_csrf.js"></script>
 	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/bootstrap.min.css">
 	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/custom.css">
 	<!-- <link href='http://fonts.googleapis.com/css?family=Courgette|Maven+Pro|Dancing+Script' rel='stylesheet' type='text/css'> -->
 </head>
 
 <body>
-	<div class="container">
-		<section id="header">
-			<div class="row">
-				<div class="span3" id="top-logo">
-					<a href="/items" id="top-logo">
-						<img src="{{ STATIC_URL }}/img/logo13.png" id="img_logo">
-					</a>
+	<div id="topbar">
+		<div id="logo">
+			<a href="/">
+				<div id="pros_block"></div>
+				<div id="cons_block"></div>
+			</a>
+		</div>
+		<div id="search">
+			<form class="form-search">
+		    	<div class="input-append">
+				    <input type="text" class="input-mir search-query" id="search_input" placeholder="search for items here">
+				    <button type="submit" class="btn btn-small"> <i class="icon-search"> </i></button>
 				</div>
-				<div class="span5" id="top-search">
-					<form class="form-search">
-				    	<div class="input-append">
-						    <input type="text" class="input-medium search-query" id="search_input" placeholder="search for items here">
-						    <button type="submit" class="btn"> <i class="icon-search"> </i></button>
-						</div>
-				    </form>
+		    </form>
+		</div>
+		<div id="other">
+			<a href="/items/explore" id="explore"><i class="icon-arrow-right"></i> Explore</a>
+		</div>
+		<div id="user">
+			<div id="action_login">
+				{% if user.is_authenticated %}
+				<div class="dropdown" id="username">
+					<a class="dropdown-toggle" data-toggle="dropdown" href="#" id="username">{{ user.full_name }}</a>
+					<ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+						<li><a tabindex="-1" href="/users/{{ user.id }}"><i class="icon-user"></i> profile</a></li>
+						<li class="divider"></li>
+						<li><a tabindex="-1" href="/customauth/logout"><i class="icon-circle-arrow-right"></i> logout</a></li>
+					</ul>
 				</div>
-				<div class="span4" id="top-actions">
-					<div id="action_login">
-						{% if user.is_authenticated %}
-						<div class="dropdown" id="username">
-							<a class="dropdown-toggle" data-toggle="dropdown" href="#">{{ user.full_name }}</a>
-							<ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
-								<li><a tabindex="-1" href="/users/{{ user.id }}"><i class="icon-user"></i> profile</a></li>
-								<li class="divider"></li>
-								<li><a tabindex="-1" href="/customauth/logout"><i class="icon-circle-arrow-right"></i> logout</a></li>
-							</ul>
-						</div>
-						{% else %}
-						<a href="/customauth/login?next={{ request.path }}">login</a>
-						{% include "customauth/login-modal.html" %}
-						{% endif %}
-					</div>
-				</div>
+				{% else %}
+				<a href="/customauth/login?next={{ request.path }}" id="username">Login</a>
+				{% endif %}
 			</div>
-		</section>
+		</div>
+	</div>
+	<div class="container">
+		{% if not user.is_authenticated %}
+		{% include "customauth/login-modal.html" %}
+		{% endif %}
 		<section id="body">
 			<div class="row">
 				<div class="span12">
@@ -56,4 +62,9 @@
 		</section>
 	</div>
 </body>
+<script type="text/javascript">
+	$(document).ready(function () {
+		siteNameSpace.exec('base');
+	});
+</script>
 </html>

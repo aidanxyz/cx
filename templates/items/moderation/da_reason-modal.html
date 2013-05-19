@@ -1,0 +1,26 @@
+<div id="da_reason-modal" class="modal hide fade">
+	<div class="modal-header">
+		<h5 id="da_reason_header"></h5>
+	</div>
+	<div class="modal-body">
+		<form id="da_reason" method="post" action="">
+			{% csrf_token %}
+			<label class="radio">
+				<input type="radio" name="reason" value="1"> Duplicate
+			</label class="radio">
+			<label class="radio">
+				<input type="radio" name="reason" value="2"> Non-relevant (spam)
+			</label class="radio">
+			<label class="radio">
+				<input type="radio" name="reason" value="3" id="other"> Other
+			</label class="radio">
+			<div class="form-inline">
+				<input type="text" name="other_reason" id="other_reason" placeholder="other reason..." disabled>
+				<button type="submit" class="btn btn-danger">Deactivate</button>
+			</div>
+		</form>
+	</div>
+	<div class="modal-footer">
+		<a href="#" class="btn" data-dismiss="modal">Cancel</a>
+	</div>
+</div>

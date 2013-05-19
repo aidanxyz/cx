@@ -1,9 +1,7 @@
 <!-- Feedback body -->
 <li class="feedback" id='{{ feedback.id }}'>
-	<div id="feedback_body">
-		<div id="score">{{ feedback.score }}</div>
-		{{ feedback.body }}	
-	</div>
+	<div id="score">{{ feedback.score }}</div>
+	<div id="feedback_body">{{ feedback.body }}</div>
 	<div id="actions">
 		{% if feedback.voted_type_id == 1 %}
 			<button class="unvote btn btn-mini active" type-id="1" weight="1">Agree</button>
@@ -17,6 +15,14 @@
 			<button class="vote btn btn-mini" type-id="2" weight="-1">Disagree</button>
 		{% endif %}
 
+		{% if user.is_authenticated %}
+			{% if perms.reviews.moderate_feedback %}
+				<a href="/feedbacks/{{ feedback.id }}/edit/">Edit</a>
+			{% else %}
+				<a href="#" id="suggest_edit">Suggest edits</a>
+			{% endif %}
+		{% endif %}
+		
 		{% if feedback.priority_value %}
 			<button class="unset_priority btn btn-mini active">#{{ feedback.priority_value }}</button>
 		{% elif feedback.voted_type_id == 1 %}
@@ -24,8 +30,8 @@
 		{% endif %}
 	</div>
 	<div id="stats">
-		<span id='agrees_count'>{{ feedback.agrees_count }}</span> Agrees
-		<span id='disagrees_count'>{{ feedback.disagrees_count }}</span> Disagrees
+		<span id='agrees_count'>{{ feedback.agrees_count }}</span> Agrees | 
+		<span id='disagrees_count'>{{ feedback.disagrees_count }}</span> Disagrees | 
 		Priorities: 
 		1-<span class="priority" id="1">{{ feedback.priority_1_count }}</span>
 		2-<span class="priority" id="2">{{ feedback.priority_2_count }}</span>

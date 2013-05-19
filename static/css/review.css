@@ -1,14 +1,97 @@
-div#item {
-	margin: 0 0 15px 0;
+div#item_wrapper {
+	border: 1px solid silver;
+	margin-bottom: 20px;
 }
 div#item_name {
-	font-size: 27px;
+	font-size: 30px;
 	font-weight: bold;
-	margin-bottom: 5px;
+	display: inline-block;
+}
+div#reviewers_count {
+	display: inline-block;
+	margin-left: 20px;
+}
+div#reviewers_count span {
+	font-weight: bold;
+}
+a#user_rating {
+	color: rgb(121, 121, 121);
+	font-size: 13px;
+	background-color: rgba(255, 255, 255, 0.85);
+	padding: 5px;
+}
+span#item_rating {
+	font-size: 21px;
+	margin-left: 20px;
+}
+div#proscons_count {
+	float: left;
+}
+div#item_info {
+	display: inline-block;
+	background-color: rgba(0, 0, 0, .8);
+	color: white;
+	padding: 30px 60px;
+	margin-left: 60px;
+}
+div#proscons_count span {
+	padding: 0 5px;
+	color: black;
+}
+span#pros_count {
+	background-color: rgba(144, 255, 129, .8);
+}
+span#cons_count {
+	background-color: rgba(255, 123, 123, .8);
+}
+div#reviews_info {
+	margin-top: 10px;
+}
+div#user_experience {
+	float: right;
+	margin: 10px 20px 0 0;
+}
+div#bottom {
+	margin-top: 50px;
+	background-color: rgba(0, 0, 0, .7);
+	padding: 5px 10px;
+}
+div#prices {
+	font-size: 18px;
+	color: silver;
+	margin-bottom: 3px;
+}
+span#price_date {
+	color: rgb(114, 114, 114);
+	font-size: 12px;
+	margin-right: 10px;
+}
+div#specifications a {
+	margin-right: 20px;
+	color: white;
+}
+div#item_actions a {
+	margin: 0 10px;
+	font-size: 13px;
+	color: rgb(131, 131, 131);
+}
+div#proscons {
+	padding-left: 63px;
 }
 div#proscons_wrapper {
 	overflow: hidden;
-	/*border: 1px solid silver;*/
+	width: 800px;
+	padding: 5px 10px 10px 10px;
+	-moz-box-shadow:    0 0 8px rgb(230, 230, 230);
+	-webkit-box-shadow: 0 0 8px rgb(230, 230, 230);
+	box-shadow:         0 0 8px rgb(230, 230, 230);
+	margin: 30px 0 50px 0;
+}
+div#pros_label {
+	border-bottom: 5px solid rgb(186, 255, 186);
+}
+div#cons_label {
+	border-bottom: 5px solid rgb(255, 207, 207);
 }
 /*div#pros {
 	background-color: rgb(225, 255, 223);
@@ -22,11 +105,17 @@ div.feedback_column {
 	/*padding: 5px 10px 5px 10px;*/
 	/*border: 1px solid silver;*/
 }
-div#pros_label, div#cons_label {
+div.column_label {
 	padding: 5px;
+	font-size: 18px;
+	margin-bottom: 10px;
+}
+div.column_label span#description {
+	font-size: 14px;
+	color: silver;
 }
 div#pros {
-	margin: 5px 20px 0 5px;
+	margin: 5px 60px 0 5px;
 	/*-moz-box-shadow:    2px 0px 2px rgb(235, 235, 235);
 	-webkit-box-shadow: 2px 0px 2px rgb(235, 235, 235);
 	box-shadow:         2px 0px 2px rgb(235, 235, 235);*/
@@ -44,13 +133,13 @@ ul#feedbacks {
 	margin: 0;
 	padding: 8px 8px 8px 28px;
 	background-color: white;
-	border: 1px solid rgb(240, 240, 240);
+	/*border: 1px solid rgb(240, 240, 240);*/
 }
 ul#feedbacks li{
 	display: block;
 	margin-left: 0;
 	margin-bottom: 15px;
-	border-bottom: 1px solid rgb(240, 240, 240);
+	border-bottom: 1px solid rgb(226, 226, 226);
 	padding-bottom: 10px;
 }
 ul#feedbacks li:last-child {
@@ -63,13 +152,13 @@ div#feedback_body {
 	/*border-bottom: 1px solid rgb(206, 206, 206);*/
 }
 div#score {
-	display: inline-block;
+	float: left;
 	width: 20px;
 	height: 20px;
 	text-align: center;
 	font-size: 12px;
 	background-color: rgb(245, 245, 245);
-	margin: 0 2px 0 -20px;
+	margin: 0 7px 0 -20px;
 	-webkit-border-radius: 10px; 
 	-moz-border-radius: 10px; 
 	border-radius: 10px; 
@@ -93,4 +182,13 @@ div#actions, div#stats {
 }
 button#feedback_add {
 	margin-top: -10px;
+}
+div#orig_feedback {
+	font-size: 16px;
+	font-style: italic;
+	margin-bottom: 10px;
+}
+
+form#add_feedback {
+	margin-left: 50px;
 }

@@ -1,0 +1,60 @@
+div#wrapper {
+	max-width: 600px;
+}
+div.item {
+	padding: 10px;
+	/*background-color: rgb(250, 250, 250);*/
+	margin-bottom: 20px;
+	border: 1px solid rgb(243, 243, 243);
+}
+div.item:hover {
+	-moz-box-shadow:    0 0 8px rgb(230, 230, 230);
+	-webkit-box-shadow: 0 0 8px rgb(230, 230, 230);
+	box-shadow:         0 0 8px rgb(230, 230, 230);
+}
+span#item_name {
+	font-size: 16px;
+	color: rgb(26, 26, 26);
+}
+div#actions {
+	margin-top: 5px;
+	padding: 5px;
+}
+div#actions a {
+	margin: 0 5px 0 5px;
+	font-size: 13px;
+}
+a#deactivate, a#duplicates {
+	cursor: pointer;
+}
+button#spam {
+	float: right;
+}
+span#category, span#date {
+	font-style: italic;
+}
+span#date {
+	color: rgb(155, 155, 155);
+	float: right;
+	font-size: 12px;
+}
+span#category {
+	background-color: rgb(255, 254, 242);
+	font-size: 13px;
+}
+div#duplicates {
+	margin-top: 5px;
+}
+a#duplicates {
+	color: rgb(238, 42, 42);
+}
+div#similar_items {
+	display: none;
+	margin-top: 5px;
+}
+div#similar_items ul li {
+	margin: 3px 0 3px 0;
+}
+div#similar_items ul li button {
+	margin-left: 5px;
+}

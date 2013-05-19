@@ -122,6 +122,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
@@ -170,4 +171,4 @@ LOGIN_REDIRECT_URL = '/items/'
 SPHINXQL_HOST = '127.0.0.1'
 SPHINXQL_PORT = 3307
 
-DETAILS_PER_PAGE = 1
+DETAILS_PER_PAGE = 5

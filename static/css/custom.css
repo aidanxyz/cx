@@ -1,9 +1,5 @@
 body {
 	background-color: white;
-/*	background-image: -moz-radial-gradient(rgb(255, 255, 255), rgb(247, 247, 247));
-	background-image: -webkit-gradient(radial, center center, 0, center center, 220, from(rgb(255, 255, 255)), to(rgb(247, 247, 247)));
-	background-image: -webkit-radial-gradient(rgb(255, 255, 255), rgb(247, 247, 247));
-	background-image: radial-gradient(rgb(255, 255, 255), rgb(247, 247, 247));*/
 }
 section#header {
 	padding: 0 0 5px 0;
@@ -11,14 +7,6 @@ section#header {
 	min-height: 70px;
 	padding-top: 15px;
 	border-bottom: 1px solid rgb(247, 247, 247);
-	/*background-image:-webkit-gradient(linear, left bottom, left top, color-stop(0.32, rgb(255, 255, 255)), color-stop(0.66, rgb(255, 255, 255)), color-stop(0.83, rgb(253, 253, 253)));
-	background-image: -webkit-linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255), rgb(253, 253, 253));
-	background-image: -moz-linear-gradient(top,rgb(255, 255, 255), rgb(255, 255, 255), rgb(253, 253, 253));
-	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='rgb(255, 255, 255)', endColorstr='rgb(255, 255, 253)');
-	-ms-filter: "progid:DXImageTransform.Microsoft.gradient(startColorstr='rgb(255, 255, 255)', endColorstr='rgb(255, 255, 253)')";
-	background-image: -ms-linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255), rgb(253, 253, 253));
-	background-image: -o-linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255), rgb(253, 253, 253));
-	background-image: linear-gradient(rgb(255, 255, 255), rgb(255, 255, 255), rgb(253, 253, 253));*/
 }
 div#top-search, div#top-actions {
 	margin-top: 18px;
@@ -41,22 +29,100 @@ img#img_logo {
 	width: 90%
 }
 section#body {
-	padding: 15px 0 0 0;
+	/*padding: 15px 0 0 0;*/
+	margin-top: 30px;
 }
 input#search_input {
-	width: 250px;
+	/*width: 250px;*/
+	height: 16px;
 }
 form.form-search {
 	float: left;
 	margin: 0;
 	padding: 0;
 }
-/*a.brand {
-	font-size: 18px;
-	font-family: sans-serif;
-	color: #700000;
-}*/
 div#action_login {
-	float: right;
-	padding-top: 3px;
+	/*float: right;*/
+	padding-top: 5px;
+}
+ul.errorlist {
+	list-style-type: none;
+}
+ul.errorlist li {
+	margin-left: -15px;
+	color: red;
+}
+
+div#topbar {
+	height: 36px;
+	background-color: rgb(253, 253, 253);
+	border-bottom: 1px solid rgb(245, 245, 245);
+	/*position: fixed;
+	width: 100%;
+	z-index: 1;*/
+}
+div#logo, div#search, div#other {
+	float: left;
+}
+
+div#search, div#other, div#user {
+	padding: 5px 0 5px 0;
+}
+
+div#logo {
+	margin-left: 207px;
+	background-color: silver;
+}
+div#logo div {
+	min-height: 36px;
+	width: 50px;
+	overflow: hidden;
+}
+div#logo div#pros_block {
+	background-color: rgb(171, 255, 185);
+	float: left;
+	border-left: 1px solid rgb(126, 255, 131);
+}
+div#logo div#cons_block {
+	background-color: rgb(255, 182, 182);
+	float: left;
+	border-right: 1px solid rgb(255, 163, 163);
+}
+
+div#search {
+	margin-left: 110px;	
+}
+
+div#other {
+	margin-left: 30px;
+	width: 262px;
+	padding-top: 10px;
+}
+
+div#user {
+	display: inline-block;
+	width: 165px;
+	text-align: right;
+}
+
+div.dropdown {
+	text-align: center;
+}
+div#user div {
+	display: inline-block;
+	margin-left: 40px;
+}
+
+a#explore {
+	color: rgb(143, 143, 143);
+	font-size: 15px;
+	padding: 5px;
+}
+
+a#username {
+	color: rgb(131, 131, 131);
+}
+
+a#username:hover {
+	color: #0088cc;
 }

@@ -1,0 +1,41 @@
+{% extends "moderator_base.html" %}
+{% load humanize %}
+{% block moderator_panel %}
+	<div id="wrapper">
+		{% if suggestions %}
+			<table class="table table-hover">
+				<caption>Feedback edit suggestions</caption>
+				<thead>
+					<tr>
+						<th>Current</th>
+						<th>Suggested</th>
+						<th id="actions"></th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for suggestion in suggestions %}
+						<tr id="{{ suggestion.id }}">
+							<td class="feedback_body">"{{ suggestion.feedback }}"</td>
+							<td class="feedback_body">"{{ suggestion.suggested_value }}"</td>
+							<td id="actions">
+								<a class="btn btn-success btn-mini" id="accept">Accept</a>
+								<a class="btn btn-info btn-mini" id="ignore">Ignore</a>
+								<a href="/feedbacks/{{ suggestion.feedback_id }}/edit/" target="edit">Edit</a>
+							</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		{% else %}
+		<div>No suggestions for now! :)</div>
+		{% endif %}
+	</div>
+	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/moderate_feedback.css">
+	<script type="text/javascript">
+		$(document).ready(function () {
+			$('ul.nav-tabs li#feedbacks').addClass('active');
+
+			siteNameSpace.exec('moderate', { page: 'feedback' });
+		});
+	</script>
+{% endblock %}

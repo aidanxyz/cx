@@ -1,0 +1,9 @@
+td.feedback_body {
+	font-style: italic;
+}
+th#actions {
+	width: 180px;
+}
+td#actions a{
+	margin: 0 5px 0 5px;
+}

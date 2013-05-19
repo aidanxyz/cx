@@ -1,28 +1,77 @@
 {% extends "base.html" %}
+{% load humanize %}
 {% block content %}
 	<div class="row">
 		<div class="span12">
-			<div id="item" item-id="{{ item.id }}">
-				<div id="item_name">{{ item.name }}</div>
-				{% if experience %}
-					<span id="usage_info" class="muted">
-						You used this {{ item.category }} for <a>{{ experience.duration }}</a> and rated as <a>{{ experience.rating }}</a>
-						<a href="/item/{{ item.id }}/usage/edit/" id="edit">edit</a>
-					</span>
-				{% else %}
-					{% include "items/usage-form.html" %}
-					{% include "items/not_used-modal.html" %}
-				{% endif %}
+			<div id="item_wrapper" {% if item.cover_image %} style="background-image: url({{ item.cover_image.image_cover_thumb.url }});min-height: {{ item.cover_image.image_cover_thumb.height }}px; position: relative;" {% endif %}>
+				<div id="item" item-id="{{ item.id }}" {% if item.cover_image %} style="position: absolute; bottom: 0; left: 0;" {% endif %}>
+					<div id="item_info">
+						<div id="item_name">
+							{{ item.name }}
+							{% if experience %}
+								<i class="icon-ok-sign icon-white" id="icon_used"></i>
+							{% endif %}
+						</div>
+
+						<span id="item_rating">{{ item.avg_rating|floatformat }}/5</span>
+						
+						<div id="reviews_info">
+							<div id="proscons_count">
+								<span id="pros_count">{{ item.pros_count }}</span><span id="cons_count">{{ item.cons_count }}</span>
+							</div>
+
+							<div id="reviewers_count">
+								<span>{{ item.reviewers_count }}</span> reviewer{{ item.reviewers_count|pluralize }}
+							</div>
+						</div>
+					</div>
+					<div id="user_experience">
+						{% if experience %}
+							<a href="/item/{{ item.id }}/usage/edit/" id="user_rating">You gave {{ experience.rating.value }}/5</a>
+						{% else %}
+							<a class="btn btn-mini" id="used"><i class="icon-ok"></i> I used this {{ item.category }}</a>
+							{% include "items/not_used-modal.html" %}
+						{% endif %}
+					</div>
+					<div id="bottom" {% if item.cover_image %} style="width: 918px;" {% endif %}>
+						<div id="prices">
+							{% if latest_price %}
+								{{ latest_price.value|floatformat }}$ <span id="price_date"> - {{ latest_price.date_added|naturaltime }}</span>
+							{% endif %}
+						</div>
+
+						{% if item.specifications %}
+							<div id="specifications">
+								{% for specification in item.specifications.all %}
+									<a href="/items/specifications/search/" data-toggle="tooltip" title="{{ specification.spectype }}">{{ specification.name }}</a>
+								{% endfor %}
+							</div>
+						{% endif %}
+					</div>
+				</div>
 			</div>
-			<hr>
 		</div>
 	</div>
+	{% if user.is_authenticated %}
+		{% include "reviews/feedbacks/suggest_edit-modal.html" %}
+	{% endif %}
+
 	<div class="row">
-		<div class="span10">
+		<div class="span12" id="proscons">
+			<div id="item_actions">
+				<button class="btn btn-small" id="hide_actions"><i class="icon-eye-close"></i> Hide actions</button>
+				{% if latest_price %}
+					<a href="/items/{{ item.id }}/prices/add/" id="add_price">Suggest new price</a>
+				{% else %}
+					<a href="/items/{{ item.id }}/prices/add/" id="add_price">Suggest price</a>
+				{% endif %}
+				<a href="/items/{{ item.id }}/prices/history/" id="add_price">Price history</a>
+				<a href="/items/{{ item.id }}/gallery/"><i class="icon-camera"></i> Gallery</a>
+				<a href="/items/{{ item.id }}/stats/"><i class="icon-align-right"></i> Stats</a>
+			</div>
 			<div id="proscons_wrapper">
 				<div class="feedback_column" id="pros">
-					<div id="pros_label">
-						What I like:
+					<div id="pros_label" class="column_label">
 					</div>
 					<ul id="feedbacks">
 						{% for feedback in feedbacks %}
@@ -39,8 +88,8 @@
 					{% endif %}
 				</div>
 				<div class="feedback_column" id="cons">
-					<div id="cons_label">
-						What I don't like:
+					<div id="cons_label" class="column_label">
+						
 					</div>
 					<ul id="feedbacks">
 						{% for feedback in feedbacks %}
@@ -58,22 +107,22 @@
 				</div>
 			</div>
 		</div>
-		<div class="span2">Hey yo</div>
 	</div>
 	<!-- ICanHaz templates -->
 	<script type="text/html" id="feedback">
 		<li class="feedback" id='{% verbatim %}{{ id }}{% endverbatim %}'>
+			<div id="score">0</div>
 			<div id="feedback_body">
-				<div id="score">0</div>
 				{% verbatim %}
-				{{ body }}
+				<div id="body">{{ body }}</div>
 				{% endverbatim %}
 			</div>
 			<div id="actions">
 				<button class="vote btn btn-mini" type-id="1" weight="1">Agree</button>
 				<button class="vote btn btn-mini" type-id="2" weight="-1">Disagree</button>
+				<a href="#" id="suggest_edit">Suggest edits</a>
 			</div>
-			<div id="stats">
+			<div id="ss">
 				<span id='agrees_count'>0</span> Agrees
 				<span id='disagrees_count'>0</span> Disagrees
 				Priorities: 
@@ -83,16 +132,6 @@
 				<a id="details_link" href="/feedbacks/{{ feedback.id }}/details">Details(<span id="count">0</span>)</a>
 			</div>
 		</li>
-		<hr>
-	</script>
-	<script type="text/html" id="usage_info">
-		<span id="usage_info" class="muted">
-			You used this {{ item.category }} for 
-			{% verbatim %}
-			<a>{{ duration }}</a> and rated as <a>{{ rating }}</a> 
-			{% endverbatim %}
-			<a href="/item/{{ item.id }}/usage/edit/" id="edit">edit</a>
-		</span>
 	</script>
 	<script type="text/html" id="similar_feedback">
 		<li id="similar_feedback">
@@ -103,7 +142,23 @@
 	</script>
 	<script type="text/html" id="set_priority">
 		{% verbatim %}
-		<button href="javascript:void(0);" class="set_priority">#{{ value }}</button>
+		<button href="javascript:void(0);" class="set_priority btn btn-mini">#{{ value }}</button>
+		{% endverbatim %}
+	</script>
+	{% verbatim %}
+	<script type="text/html" id="suggest_edit_form">
+		<div id="orig_feedback">{{ feedback_body }}</div>
+		<form action="/feedbacks/{{ feedback_id }}/suggest_edit/" method="post" id="suggest_edit">
+			<div class="form-inline">
+				<input type="text" name="suggested_value" value="{{ feedback_body }}" autofocus>
+				<input type="submit" class="btn btn-info" value="Submit for review">
+			</div>	
+		</form>
+	</script>
+	{% endverbatim %}
+	<script type="text/html" id="user_rating">
+		{% verbatim %}
+		<a href="/item/{{ item_id }}/usage/edit/" id="user_rating">You gave {{ user_rating }}/5</a>
 		{% endverbatim %}
 	</script>
 	<!-- JavaScript -->

@@ -1,49 +1,3 @@
-/* function is immediately executed; returns object closure */
-var DjangoAjaxCsrf = (function(){
-    var config  = {
-        cookie_name: 'csrftoken',
-        cookie_val: null
-    }
-
-    function init() {
-        $.ajaxSetup({
-            crossDomain: false, // obviates need for sameOrigin test
-            beforeSend: function(xhr, settings) {
-                if (!isSafeMethod(settings.type)) {
-                    if (config.cookie_val == null) {
-                        config.cookie_val = getCookieValue(config.cookie_name);
-                    }
-                    xhr.setRequestHeader("X-CSRFToken", config.cookie_val);
-                }
-            }
-        });
-    }
-
-    function getCookieValue(name) {
-        var cookieValue = null;
-        if (document.cookie && document.cookie != '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = jQuery.trim(cookies[i]);
-                if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-
-    function isSafeMethod(method) {
-        // these HTTP methods do not require CSRF protection
-        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-    }
-
-    return {
-        init: init
-    }
-})();
-
 /* returns object closure*/
 function VoteHandler($this) {  //"$this" is a clicked link
     var prev_vote = $this.siblings('.unvote');
@@ -106,7 +60,7 @@ function VoteHandler($this) {  //"$this" is a clicked link
     }
 
     function affect_score(weight) {
-        var score = feedback.children('div#feedback_body').children('#score');
+        var score = feedback.children('div#score');
         score.text(parseInt(score.text()) + weight);
         if (is_revote) {
             score.text(parseInt(score.text()) - parseInt(prev_vote.attr('weight')));
@@ -154,7 +108,7 @@ function VoteHandler($this) {  //"$this" is a clicked link
     }
 
     function remove_set_priority () {
-        $this.siblings('.set_priority').text('').hide();
+        $this.siblings('.set_priority').remove();
     }
 
     return {
@@ -167,6 +121,13 @@ function VoteHandler($this) {  //"$this" is a clicked link
 function get_similars(query, url, results_wrapper, ich_id, add_data) {
     var results_list = results_wrapper.children('ul:first');
     var to_send = $.extend({'query': query}, add_data);
+
+    if (query.length < 2) {
+        results_list.html("");
+        results_wrapper.hide();
+        return;
+    }
+    
     var request = $.ajax({
         type: 'GET',
         url: url,
@@ -211,10 +172,10 @@ function PriorityHandler (wrapper_sel) {
         if (parseInt(max_set_priority) < 3) {
             // console.log('max_set_priority + 1: ' + parseInt(max_set_priority + 1));
             // console.log('number of .set_priority: ' + $(wrapper_sel).find('.set_priority').length);
-            $(wrapper_sel).find('.set_priority').text('#' + (max_set_priority + 1)).show();
+            $(wrapper_sel).find('.set_priority').text('#' + (max_set_priority + 1));//.show();
         }
         else {
-            $(wrapper_sel).find('.set_priority').text('').hide();
+            $(wrapper_sel).find('.set_priority').remove();//text('').hide();
         }
     }
     affect_set_priority();
@@ -258,7 +219,7 @@ function PriorityHandler (wrapper_sel) {
         var feedback = clickable.parents('li');
         var clicked_priority_val = clickable.text().substring(1);
 
-        // is this latest set priority
+        // is this latest priority that was set by user
         if (parseInt(max_set_priority) !== parseInt(clicked_priority_val)) {
             alert('Unset priority #' + max_set_priority + ' first');
             return false;
@@ -300,6 +261,15 @@ function inc_text_value (dom_obj, n) {
     dom_obj.text(parseInt(dom_obj.text()) + n);
 }
 
+function other_reason_adapt (radio_id, input_id) {
+    $('input:radio#' + radio_id).change(function() {
+        $('input:text#' + input_id).removeAttr('disabled').focus();
+    });
+    $('input:radio').not('#' + radio_id).change(function() {
+        $('input:text#' + input_id).attr('disabled', '');
+    });
+}
+
 // object literal pattern
 var siteNameSpace = {
     common : {
@@ -318,9 +288,30 @@ var siteNameSpace = {
             }
         },
     },
-    mainpage: {
+    base: {
         init: function(){
-            return;
+            $('input#search_input').typeahead({
+                source: function(query, process) {
+                    urls = {}
+                    if (query.length > 4) {
+                        $.get('/items/search/', {query: query}, function(data) {
+                            var results = [];
+                            data = $.parseJSON(data);
+                            $.each(data, function(i, object) {
+                                results[i] = object.name;
+                                urls[object.name] = object.id;
+                            });
+                            process(results);
+                        });
+                    }
+                },
+                updater: function(item) {
+                    setTimeout(function() {
+                        window.location.href = '/items/' + urls[item] + '/';
+                    }, 100);
+                    return item;
+                }
+            });
         }
     },
     review: {
@@ -337,6 +328,19 @@ var siteNameSpace = {
             else {
                 this.guest();
             }
+            // Enabel specification tooltips
+            $('div#specifications a').tooltip({placement: 'bottom'});
+            // Toggle actions
+            $('button#hide_actions').click(function() {
+                $('div#actions').toggle();
+                $('div#stats').toggle();
+                if ($(this).hasClass('active')) {
+                    $(this).removeClass('active');
+                }
+                else {
+                    $(this).addClass('active');
+                }
+            });
         },
         guest: function() {
             $('.vote, .unvote, a#add_feedback, a#used, #usage_submit').click(function() {
@@ -390,6 +394,8 @@ var siteNameSpace = {
                         var feedback = ich.feedback(data);
                         form.siblings('ul').append(feedback);
                         form.children('[name="feedback_body"]').val("");
+                        // hide similars
+                        $('div#similars').hide();
                         // fire update function
                     });
 
@@ -428,19 +434,53 @@ var siteNameSpace = {
                         // hide others since we can choose only one favorite 
                         $('.favorite').hide();
                     });
-                })
+
+                    request.fail(function(jqXHR, textStatus, errorThrown) {
+                        alert("Something went wrong");
+                    });
+                });
+                // suggesting an edit
+                $('div#proscons_wrapper').on('click', 'a#suggest_edit', function() {
+                    var clickable = $(this);
+                    var feedback = clickable.parents('li.feedback');
+                    var feedback_body = feedback.children('div#feedback_body').text();
+                    var suggest_edit_modal = $('div#suggest_edit-modal');
+
+                    var suggest_edit_form = ich.suggest_edit_form({
+                        feedback_id: feedback.attr('id'), 
+                        feedback_body: feedback_body,
+                    });
+                    console.log(feedback_body);
+                    suggest_edit_modal.find('div#dynamic_content').html(suggest_edit_form);
+                    suggest_edit_modal.find('input[name=suggested_value]').focus();
+                    suggest_edit_modal.modal('show');
+                });
+                // submitting suggest
+                $('div#item').on('submit', 'form#suggest_edit', function() {
+                    var form = $(this);
+                    var request = $.ajax({
+                       url: form.attr('action'),
+                       type: form.attr('method'),
+                       data: form.serialize(),
+                    });
+
+                    request.done(function(data, textStatus, jqXHR) {
+                        var suggest_edit_modal = $('div#suggest_edit-modal');
+                        suggest_edit_modal.find('div#dynamic_content').html("<div id='thanks'>Thanks!</div>");
+                        setTimeout(function(){
+                            suggest_edit_modal.modal('hide');
+                        }, 1000);
+                    });
+
+                    request.fail(function(jqXHR, textStatus, errorThrown) {
+                        alert("Something went wrong");
+                    });
+                    return false;
+                });
             },
             not_used: function() {
-                // <I used it> click
-                $('button#used').click(function() {
-                    setTimeout(function() {
-                        $('#not_used-modal').modal('hide');
-                    }, 2500);
-                });
-
                 $('form#usage_form').submit(function() {
                     var form = $(this);
-                    var forms = $('form#usage_form');
 
                     var request = $.ajax({
                         type: form.attr('method'),
@@ -450,19 +490,18 @@ var siteNameSpace = {
                     });
 
                     request.done(function(data, textStatus, jqXHR) {
-                        forms.after(ich.usage_info({
-                            duration: form.find('select#id_duration option:selected').text(),
-                            rating: form.find('select#id_rating option:selected').text()
-                        }));
-                        forms.remove();
-                        // close modal if it was modal form
-                        $('#not_used-modal').modal('hide');
                         // switch event handlers to allow voting etc.
                         $('.vote, .unvote, a#add_feedback').off('click');
                         siteNameSpace.review.authenticated.used();
                         // remove "Add feedback" links and show forms
                         $('a#add_feedback').remove();
                         $('form#add_feedback').show();
+                        // close modal
+                        $('div#not_used-modal').modal('hide');
+                        $('div#item_name').append('<i class="icon-ok-sign icon-white" id="icon_used"></i>');
+                        $('span#item_rating').text(data['avg_rating'] + '/5');
+                        $('div#reviewers_count span').text(data['reviewers_count']);
+                        $('a#used').replaceWith(ich.user_rating(data));
                     });
 
                     request.fail(function(jqXHR, textStatus, errorThrown) {
@@ -472,8 +511,8 @@ var siteNameSpace = {
                     return false;
                 });
                 // voting, unvoting, adding a feedback on unused state
-                $('.vote, .unvote, a#add_feedback').click(function() {
-                    $('#not_used-modal').modal();
+                $('.vote, .unvote, a#add_feedback, a#used').click(function() {
+                    $('div#not_used-modal').modal('show');
                 });
             }
         },
@@ -481,7 +520,6 @@ var siteNameSpace = {
     item_add: {
         init: function() {
             // fetching similar items
-            var MIN_MODEL_NAME = 1;
             var similars_wrapper = $('div[data-similars]');
             var options = similars_wrapper.data('similars');
             var input = similars_wrapper.siblings('input[name=' + options.input_name + ']');
@@ -503,12 +541,13 @@ var siteNameSpace = {
                 
                 var request = $.ajax({
                     url: '/feedbacks/' + feedback_id + '/details/add/',
-                    data: form.serialize(),
+                    data: {body: tinyMCE.activeEditor.getContent()},
                     type: 'post',
                     dataType: 'json'
                 });
 
                 request.done(function(data, textStatus, jqXHR) {
+                    console.log($('<div/>').html(String(data.body)).contents());
                     var detail = ich.detail(data);
                     form.next('div#details').prepend(detail);
                     form.children('[name="body"]').val("");
@@ -521,6 +560,370 @@ var siteNameSpace = {
                 return false;
             });
         }
+    },
+    moderate: {
+        init: function(config) {
+            if (config.page == 'items') {
+                this.items();
+            }
+            else if (config.page == 'feedback') {
+                this.feedback();
+            }
+            else if (config.page == 'prices') {
+                this.prices();
+            }
+            else if (config.page == 'images') {
+                this.images();
+            };
+        },
+        items: function() {
+            $('button#approve').click(function() {
+                var clickable = $(this);
+                var item_div = clickable.parents('div.item');
+                var request = $.ajax({
+                    url: '/items/' + item_div.attr('id') + '/approve/',
+                    type: 'post',
+                    dataType: 'json',
+                });
+
+                request.done(function(data, textStatus, jqXHR) {
+                    clickable.addClass('active btn-success');
+                    clickable.html("<i class='icon-ok icon-white'></i> Approved");
+                    setTimeout(function() {
+                        item_div.fadeOut('slow');
+                    }, 2000);
+                });
+
+                request.fail(function(jqXHR, textStatus, errorThrown) {
+                    // var data = $.parseJSON(jqXHR.responseText);
+                    if (data.status) {
+                        var action = (data.status == 'AP') ? 'approved' : 'deactivated';
+                        alert("Was already " + action + " by " + data.moderated_by);
+                    }
+                    else 
+                        alert("Something went wrong.");
+                });
+            });
+
+            $('a#duplicates').click(function() {
+                var clickable = $(this);
+                var request = $.ajax({
+                    url: '/items/' + clickable.attr('item-id') + '/duplicates/',
+                    type: 'post',
+                    dataType: 'json',
+                });
+                
+                request.done(function(data, textStatus, jqXHR) {
+                    // data = $.parseJSON(jqXHR.responseText);
+                    ul = clickable.siblings('div#similar_items').children('ul:first');
+                    $.each(data, function(i) {
+                        var similar_item = ich.similar_item({id: i, name: data[i]});
+                        ul.append(similar_item);
+                    });
+                    ul.parent().show();
+                    // disable this functionality
+                    clickable.attr('id', 'duplicates_got');
+                });
+
+                request.fail(function(jqXHR, textStatus, errorThrown) {
+                    alert("Something went wrong");
+                });
+            });
+
+            $('div#duplicates').on('click', 'button#duplicate', function() {
+                var clickable = $(this);
+                var item_div = clickable.parents('div.item');
+                var request = $.ajax({
+                    url: '/items/' + item_div.attr('id') + '/deactivate/',
+                    type: 'post',
+                    dataType: 'json',
+                    data: {reason: 1, duplicate_of: clickable.attr('duplicate_of')} // reason:1 means 'duplicate'
+                });
+
+                request.done(function(data, textStatus, jqXHR) {
+                    item_div.css("background-color", "red");
+                    setTimeout(function () {
+                        item_div.fadeOut("slow");
+                    }, 1000);
+                });
+
+                request.fail(function(jqXHR, textStatus, errorThrown) {
+                    alert("Something went wrong");
+                });
+            });
+
+            $('button#spam').click(function() {
+                var clickable = $(this);
+                var item_div = clickable.parents('div.item');
+                var request = $.ajax({
+                    url: '/items/' + item_div.attr('id') + '/deactivate/',
+                    type: 'post',
+                    dataType: 'json',
+                    data: {reason: 2} // reason:2 means 'Non-relevant (spam)'
+                });
+
+                request.done(function(data, textStatus, jqXHR) {
+                    item_div.css("background-color", "red");
+                    setTimeout(function () {
+                        item_div.fadeOut("slow");
+                    }, 1000);
+                });
+
+                request.fail(function(jqXHR, textStatus, errorThrown) {
+                    alert("Something went wrong");
+                });
+            });
+        },
+        feedback: function() {
+            $('a#accept').click(function() {
+                var clickable = $(this);
+                var suggestion_id = clickable.parents('tr').attr('id');
+                
+                var request = $.ajax({
+                    url: '/feedbacks/suggestions/' + suggestion_id + '/accept/',
+                    type: 'post',
+                    dataType: 'json'
+                });
+
+                request.done(function(data, textStatus, jqXHR) {
+                    var row = clickable.parents('tr');
+                    row.css("background-color", "green");
+                    setTimeout(function(){
+                        row.fadeOut("slow");
+                    }, 1000);
+                });
+
+                request.fail(function(jqXHR, textStatus, errorThrown) {
+                    alert("Something went wrong");
+                });
+            });
+
+            $('a#ignore').click(function() {
+                var clickable = $(this);
+                var suggestion_id = clickable.parents('tr').attr('id');
+                
+                var request = $.ajax({
+                    url: '/feedbacks/suggestions/' + suggestion_id + '/ignore/',
+                    type: 'post',
+                    dataType: 'json'
+                });
+
+                request.done(function(data, textStatus, jqXHR) {
+                    var row = clickable.parents('tr');
+                    row.css("background-color", "blue");
+                    setTimeout(function(){
+                        row.fadeOut("slow");
+                    }, 1000);
+                });
+
+                request.fail(function(jqXHR, textStatus, errorThrown) {
+                    alert("Something went wrong");
+                });
+            });
+        },
+        prices: function() {
+            $('a#approve').click(function() {
+                var clickable = $(this);
+                var price_id = clickable.parents('tr').attr('id');
+                
+                var request = $.ajax({
+                    url: '/items/prices/' + price_id + '/approve/',
+                    type: 'post',
+                    dataType: 'json'
+                });
+
+                request.done(function(data, textStatus, jqXHR) {
+                    var row = clickable.parents('tr');
+                    row.css("background-color", "green");
+                    setTimeout(function(){
+                        row.fadeOut("slow");
+                    }, 1000);
+                });
+
+                request.fail(function(jqXHR, textStatus, errorThrown) {
+                    alert("Something went wrong");
+                });
+            });
+
+            $('a#ignore').click(function() {
+                var clickable = $(this);
+                var price_id = clickable.parents('tr').attr('id');
+                
+                var request = $.ajax({
+                    url: '/items/prices/' + price_id + '/ignore/',
+                    type: 'post',
+                    dataType: 'json'
+                });
+
+                request.done(function(data, textStatus, jqXHR) {
+                    var row = clickable.parents('tr');
+                    row.css("background-color", "blue");
+                    setTimeout(function(){
+                        row.fadeOut("slow");
+                    }, 1000);
+                });
+
+                request.fail(function(jqXHR, textStatus, errorThrown) {
+                    alert("Something went wrong");
+                });
+            });
+        },
+        images: function() {
+            $('button#make_cover').click(function() {
+                var clickable = $(this);
+                var request = $.ajax({
+                    url: clickable.attr('url'),
+                    data: {image_id: clickable.attr('image-id')},
+                    type: 'post',
+                    dataType: 'json'
+                });
+
+                request.done(function(data, textStatus, jqXHR) {
+                    $('i.icon-star').remove();
+                    clickable.parent('li').after("<i class='icon-star'></i>");
+                });
+
+                request.fail(function(jqXHR, textStatus, errorThrown) {
+                    alert('Something went wrong');
+                });
+            });
+        },
+    },
+    edit_item: {
+        init: function () {
+            $('input:text#id_other_reason').attr('disabled', '');
+            other_reason_adapt('id_reason_1', 'id_other_reason');
+            // fetching similar items
+            var similars_wrapper = $('div[data-similars]');
+            var options = similars_wrapper.data('similars');
+            var input = $('input[name=' + options.input_name + ']');
+            var thread = null;
+            $(input).keyup(function(){
+                clearTimeout(thread);
+                thread = setTimeout(function(){
+                    get_similars(input.val(), options.url, similars_wrapper, options.ich_id);
+                }, 1000);
+            });
+        }
+    },
+    home: {
+        init: function() {
+            $('input[name=query]').typeahead({
+                source: function(query, process) {
+                    urls = {}
+                    if (query.length > 4) {
+                        $.get('/items/search/', {query: query}, function(data) {
+                            var results = [];
+                            data = $.parseJSON(data);
+                            $.each(data, function(i, object) {
+                                results[i] = object.name;
+                                urls[object.name] = object.id;
+                            });
+                            process(results);
+                        });
+                    }
+                },
+                updater: function(item) {
+                    setTimeout(function() {
+                        window.location.href = '/items/' + urls[item] + '/';
+                    }, 100);
+                    return item;
+                }
+            });
+
+            $.get('/items/latest/5/', {}, function(data) {
+                data = $.parseJSON(data);
+                var link = $('div#search_example a#item_name');
+                link.text(data[0].name);
+                link.attr('href', '/items/' + data[0] + '/');
+                
+                var i = 1;
+                function showLatestItems() {
+                    setTimeout(function() {
+                        if (data.length > i) {
+                            link.fadeOut("slow", function() {
+                                link.text(data[i].name);
+                                link.attr('href', '/items/' + data[i].id + '/');
+                            });
+                            link.fadeIn("fast");
+                            i += 1;
+                        }
+                        else {
+                            i = 0;
+                        }
+                        showLatestItems();
+                    }, 3000);
+                }
+
+                showLatestItems();
+            });
+        }
+    },
+    stats: {
+        init: function(options) {
+            if (options.page == 'item') {
+                this.item();
+            }
+            else if (options.page == 'feedback') {
+                this.feedback();
+            }
+        },
+        item: function() {
+            // Load the Visualization API and the piechart package.
+            google.load('visualization', '1', {'packages':['corechart'], 'callback': drawChart});
+
+            // Set a callback to run when the Google Visualization API is loaded.
+            // google.setOnLoadCallback(drawChart);
+
+            function drawChart() {
+                var item_id = $('div.item').attr('id');
+                var jsonData = $.ajax({
+                    url: '/items/' + item_id + '/get_stats/',
+                    type: "get",
+                    dataType:"json",
+                    async: false,
+                }).responseText;
+
+                jsonData = $.parseJSON(jsonData);
+                console.log(jsonData);
+
+                $.each(jsonData, function(i, object) {
+                    if (i != 'prices_table') {
+                        // Create our data table out of JSON data loaded from server.
+                        var data = google.visualization.arrayToDataTable(object);
+                        var chart = new google.visualization.PieChart(document.getElementById(i));
+                        chart.draw(data, {
+                            title: i.substr(0, i.length - '_table'.length).toUpperCase(), 
+                            width: 450, 
+                            height: 270
+                        });
+                    }
+                    else {
+                        var data = new google.visualization.DataTable();
+                        // transform django date into datetime and django float into number
+                        for (var j = 0; j < object.length; ++j) {
+                            object[j][0] = new Date(object[j][0]);
+                            object[j][1] = parseInt(object[j][1]);
+                        }
+
+                        data.addColumn('datetime', 'Date added');
+                        data.addColumn('number', 'Price');
+                        data.addColumn({type: 'string', role: 'annotation'});
+                        data.addColumn({type: 'string', role: 'annotationText'});
+                        data.addRows(object);
+
+                        var options = {
+                            title: i.substr(0, i.length - '_table'.length).toUpperCase(),
+                            width: 500, 
+                            height: 300
+                        };
+
+                        var chart = new google.visualization.LineChart(document.getElementById(i));
+                        chart.draw(data, options);
+                    }
+                });
+            }
+        },
     },
     login: {
         init: function() {

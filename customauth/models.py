@@ -3,9 +3,10 @@ from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, Permis
 from django.conf import settings
 from django.forms import ModelForm
 from django.utils import timezone
+from django import forms
 
 class CustomUserManager(BaseUserManager):
-	def create_user(self, email, full_name, year_of_birth, gender, password=None):
+	def create_user(self, email, full_name, year_of_birth, gender, country, password=None):
 		"""
 		Creates and saves a User with the given email, full_name and password
 		"""
@@ -15,11 +16,15 @@ class CustomUserManager(BaseUserManager):
 		if year_of_birth > (timezone.now().year - 10) or year_of_birth < (timezone.now().year - 100):
 			raise ValueError('Year of birth is out of bounds')
 
+		if gender != 'M' and gender != 'F':
+			raise ValueError('Wrong gender')
+
 		user = self.model(
 			email=CustomUserManager.normalize_email(email),
 			full_name=full_name,
 			year_of_birth=year_of_birth,
-			gender=gender
+			gender=gender,
+			country=country
 		)
 
 		user.set_password(password)
@@ -36,6 +41,13 @@ class CustomUserManager(BaseUserManager):
 		user.save(using=self._db)
 		return user
 
+class Country(models.Model):
+	name = models.CharField(max_length=128, unique=True)
+	code = models.CharField(max_length=5, null=True, blank=True)
+
+	def __unicode__(self):
+		return self.name
+
 class CustomUser(AbstractBaseUser, PermissionsMixin):
 	GENDER_CHOICES = (
 		('M', 'Male'),
@@ -51,6 +63,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 		db_index=True,
 	)
 	is_active = models.BooleanField(default=True)
+	country = models.ForeignKey(Country)
 
 	objects = CustomUserManager()
 
@@ -69,12 +82,18 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 	def __unicode__(self):
 		return self.full_name + ' ' + self.email
 
-	def has_perm(self, perm, obj=None):
-		return True;
+	# def has_perm(self, perm, obj=None):
+	# 	return True;
 
-	def has_module_perms(self, app_label):
-		return True
+	# def has_module_perms(self, app_label):
+	# 	return True
 
 	@property
 	def is_staff(self):
 		return self.is_superuser
+
+class CustomUserRegistrationForm(forms.ModelForm):
+	password = forms.CharField()
+	class Meta:
+		model = CustomUser
+		fields = ('email', 'full_name', 'year_of_birth', 'gender', 'country')

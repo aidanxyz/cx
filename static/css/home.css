@@ -1,0 +1,37 @@
+div#wrapper {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	margin-top: -100px;
+	margin-left: -299px;
+}
+div#logo, div#search_form {
+	display: inline-block;
+}
+div#logo {
+	font-size: 28px;
+	font-family: 'Share Tech';
+}
+div#logo span {
+	padding: 5px;
+}
+span#pros {
+	background-color: rgb(171, 255, 185);
+}
+span#cons {
+	background-color: rgb(255, 182, 182);
+}
+div#search_form {
+	margin-left: 15px;
+}
+div#under_search {
+	margin: -20px 0 0 215px;
+}
+div#search_example {
+	color: rgb(177, 177, 177);
+	font-size: 12px;
+	display: inline-block;
+}
+span#item_name {
+	color: rgb(134, 134, 134);
+}

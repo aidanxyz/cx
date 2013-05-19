@@ -9,9 +9,22 @@
 							<a href="#" class="thumbnail">
 								<img src="{{ item_image.image_gallery_thumb.url }}" alt="">
 							</a>
+							{% if item.cover_image_id == item_image.id %}
+								<i class="icon-star"></i>
+							{% endif %}
+							{% if perms.items.moderate_items and item.cover_image != item_image %}
+								<button url="/items/{{ item.id }}/set_cover_image/" class="btn btn-mini" id="make_cover" image-id="{{ item_image.id }}">Make cover</button>
+							{% endif %}
 						</li>
 					{% endfor %}
 				</ul>
+				{% if perms.items.moderate_items %}
+					<script type="text/javascript">
+						$(document).ready(function () {
+							siteNameSpace.exec('moderate', { page: 'images' });
+						});
+					</script>
+				{% endif %}
 		</div>
 	</div>
 

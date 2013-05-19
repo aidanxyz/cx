@@ -1,7 +1,14 @@
 from django.conf import settings
 import MySQLdb
+from contextlib import closing
 
+"""
+For "insert" and "delete" statements
+"""
 def sphinxql_query(query):
-	db = MySQLdb.connect(host=settings.SPHINXQL_HOST, port=settings.SPHINXQL_PORT)
-	cursor = db.cursor()
-	return cursor.execute(query) # returns rows_affected
+	connection = MySQLdb.connect(host=settings.SPHINXQL_HOST, port=settings.SPHINXQL_PORT)
+	cursor = connection.cursor()
+	numrows_affected = cursor.execute(query)
+	cursor.close()
+	connection.close()
+	return numrows_affected

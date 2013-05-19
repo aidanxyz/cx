@@ -10,6 +10,7 @@ from reviews.sphinxql import sphinxql_query
 from reviews.custom_exceptions import UserDidNotUseItem, PriorityOutOfRange, MustAgreeFirst, WrongOrderPriority
 from customauth.models import CustomUser
 from django.utils import timezone
+from django import forms
 
 # Create your models here.
 # pragmatique
@@ -36,6 +37,10 @@ class Feedback(models.Model):
 	class Meta:
 		unique_together = ('body', 'item', 'is_positive')
 		ordering = ('-score', 'date_created')
+
+		permissions = (
+			("moderate_feedback", "Can access views related to feedback moderation"), 
+		)
 
 	def save(self, request=None, *args, **kwargs):
 		if request:	# if this is view call
@@ -77,22 +82,16 @@ def feedback_pre_delete(sender, instance, **kwargs):
 	else:
 		Item.objects.filter(id=instance.item_id).update(cons_count=F('cons_count') - 1)
 
-class ModerationReason(models.Model):
-	reason = models.CharField(max_length=200, unique=True)
-
-	def __unicode__(self):
-		return self.reason
-
-class FeedbackCloseInfo(models.Model):
+class FeedbackDeactivationHistory(models.Model):
 	feedback = models.ForeignKey(Feedback)
 	closed_by = models.ForeignKey(settings.AUTH_USER_MODEL)
 	date_closed = models.DateTimeField('date closed')
-	reason = models.ForeignKey(ModerationReason)
+	# reason = models.ForeignKey()
 
 	def __unicode__(self):
 		return self.feedback + self.reason
 
-class FeedbackEditInfo(models.Model):
+class FeedbackEditHistory(models.Model):
 	feedback = models.ForeignKey(Feedback)
 	edited_by = models.ForeignKey(settings.AUTH_USER_MODEL)
 	date_edited = models.DateTimeField('date closed')
@@ -100,6 +99,25 @@ class FeedbackEditInfo(models.Model):
 	
 	def __unicode__(self):
 		return self.feedback + self.old_value
+
+class FeedbackEditSuggestion(models.Model):
+	feedback = models.ForeignKey(Feedback)
+	suggested_value = models.CharField(max_length=144)
+	suggested_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="suggestions")
+	date_suggested = models.DateTimeField()
+	is_resolved = models.BooleanField(default=False)
+	resolved_by = models.ForeignKey(settings.AUTH_USER_MODEL, related_name="resolvings", null=True, blank=True)
+
+class FeedbackSuggestEditForm(forms.ModelForm):
+	class Meta:
+		model = FeedbackEditSuggestion
+		fields = ('suggested_value',)
+
+class FeedbackEditForm(forms.ModelForm):
+	class Meta:
+		model = Feedback
+		fields = ('body', )
+
 
 class VoteType(models.Model):
 	name = models.CharField(max_length=32, unique=True)

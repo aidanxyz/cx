@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+	<div class="span10">
+		<ul class="nav nav-tabs">
+			<li id="prices" class="pull-right">
+				<a href="/items/prices/moderate/">Prices</a>
+			</li>
+			<li id="images" class="pull-right">
+				<a href="#">Images</a>
+			</li>
+			<li id="feedbacks" class="pull-right">
+				<a href="/feedbacks/moderate/">Feedbacks</a>
+			</li>
+			<li id="items" class="pull-right">
+				<a href="/items/moderate/">Items</a>
+			</li>
+		</ul>
+		{% block moderator_panel %}
+		{% endblock %}	
+	</div>
+	<div class="span2"></div>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "moderator_base.html" %}
+{% load humanize %}
+{% block moderator_panel %}
+	<div id="wrapper">
+		{% for item in items %}
+			<div class="item" id="{{ item.id }}">
+				<div id="item_info">
+					<span id="item_name">{{ item.name }}</span><span id="category"> - in {{ item.category }}{{ 2|pluralize }}</span><span id="date"> {{ item.date_created|naturaltime }}</span>
+				</div>
+				<div id="actions">
+					<button class="btn btn-mini" id="approve">Approve</button>
+					<a href="/items/{{ item.id }}/edit/">Edit</a>
+					<button class="btn btn-mini btn-danger" id="spam">Non-relevant (spam)</button>
+					<div id="duplicates">
+						{% if item.possible_duplicates.number %}
+							<a id="duplicates" item-id="{{ item.id }}">Is it copy of one of these? ({{ item.possible_duplicates.number }})</a>
+						{% endif %}
+						<div id="similar_items">
+							<ul>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		{% endfor %}
+	</div>
+	{% include "items/moderation/da_reason-modal.html" %}
+	<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/css/moderate_items.css">
+	<script type="text/javascript">
+		$(document).ready(function () {
+			$('ul.nav-tabs li#items').addClass('active');
+
+			siteNameSpace.exec('moderate', { page: 'items' });
+		});
+	</script>
+	<script type="text/html" id="similar_item">
+		<li>
+		{% verbatim %}
+			<span>{{ name }}</span> --- <button class="btn btn-mini btn-danger" id="duplicate" duplicate_of={{ id }}>Yes</button>
+		{% endverbatim %}
+		</li>
+	</script>
+{% endblock %}
